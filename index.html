@@ -249,6 +249,13 @@
             <button id="startBtn">Iniciar Reconhecimento</button>
             <button id="stopBtn" disabled>Parar</button>
         </div>
+
+        <div class="commands">
+            <h3>Importante para uso em Celular:</h3>
+            <p>1. Ao carregar a página, o navegador pode pedir permissão para usar o microfone (para a barra de volume). **Por favor, conceda.**</p>
+            <p>2. Para que o Bloquito comece a **escutar seus comandos**, você **precisa tocar no botão "Iniciar Reconhecimento"**. Esta é uma medida de segurança do navegador para o serviço de reconhecimento de voz e não pode ser contornada por código.</p>
+            <p>3. Se o Bloquito não responder, **verifique se você concedeu a permissão de microfone** para este site nas configurações do seu navegador.</p>
+        </div>
         
         <div class="commands">
             <h3>Comandos e Perguntas Sugeridas:</h3>
@@ -313,8 +320,8 @@
                     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                     
                     this.microphone.connect(this.analyser);
-                    // Disconnect from destination to avoid audio feedback, but allow analysis
-                    // this.analyser.connect(this.audioContext.destination); // No longer needed
+                    // Desconecta do destino para evitar feedback de áudio, mas permite análise
+                    // this.analyser.connect(this.audioContext.destination); // Não é mais necessário
                     this.monitorAudio();
                 } catch (error) {
                     console.error('Erro ao acessar microfone para monitoramento:', error);
@@ -365,10 +372,9 @@
                 this.startBtn.addEventListener('click', () => this.startListening());
                 this.stopBtn.addEventListener('click', () => this.stopListening());
 
-                // Lidar com a pausa e retomada da síntese de fala
                 if ('speechSynthesis' in window) {
                     speechSynthesis.onvoiceschanged = () => {
-                        // Isso garante que as vozes estejam carregadas, mas não precisa de ação aqui.
+                        // Garante que as vozes estejam carregadas.
                     };
                 }
             }
@@ -378,8 +384,6 @@
                 this.recognitionActiveByUser = true; // Define que o usuário quer o reconhecimento ativo
                 try {
                     this.recognition.start();
-                    // A caixa de diálogo de permissão para SpeechRecognition pode aparecer aqui pela primeira vez
-                    // em alguns navegadores/sistemas operacionais, mesmo que o monitoramento de áudio já tenha permissão.
                 } catch (error) {
                     console.error('Erro ao iniciar reconhecimento:', error);
                     if (error.name === 'InvalidStateError') {
@@ -423,19 +427,18 @@
                 
                 finalTranscript = finalTranscript.trim();
 
-                // Processa apenas se houver transcrição e confiança razoável
-                // Aumentei a confiança mínima para evitar ruídos ou "não-falas"
-                if (finalTranscript.length > 0 && confidence > 0.5) { 
+                // Processa apenas se houver transcrição e confiança razoável (confiança mínima aumentada)
+                if (finalTranscript.length > 0 && confidence > 0.6) { 
                     this.addMessage(`Você: ${finalTranscript}`, 'user');
                     this.processCommand(finalTranscript.toLowerCase());
-                } else if (finalTranscript.length > 0 && confidence <= 0.5) {
-                    // Se houver algum som mas a confiança for muito baixa, ignora para evitar "não entendi" desnecessário
+                } else if (finalTranscript.length > 0 && confidence <= 0.6) {
+                    // Se houver algum som, mas a confiança for muito baixa, ignora para evitar "não entendi" desnecessário
                     console.log(`Bloquito: Ignorando entrada de baixa confiança: "${finalTranscript}" (Confiança: ${confidence.toFixed(2)})`);
                 }
             }
             
             onError(event) {
-                // 'no-speech' ocorre quando não detecta fala; vamos ignorar para evitar mensagens de erro excessivas
+                // 'no-speech' ocorre quando não detecta fala; ignoramos para evitar mensagens de erro excessivas
                 if (event.error !== 'no-speech') {
                     console.error('Erro no reconhecimento:', event.error);
                     let errorMessage = '';
@@ -494,7 +497,8 @@
                 // --- Perguntas Específicas sobre Bloco+ e Asthor Barden ---
                 else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('o que e blocomais') || normalizedCommand.includes('fale sobre o bloco mais')) {
                     response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
-                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
+                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.included
+('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
                     response = 'O STEAMAKER é um kit semelhante ao Bloco+, também da Asthor Barden, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
                 } else if (normalizedCommand.includes('bloco mais bot') || normalizedCommand.includes('bloco+ bot') || normalizedCommand.includes('o que e bloco mais bot') || normalizedCommand.includes('esp32 bloco mais')) {
                     response = 'O Bloco+Bot é o microcontrolador central do Bloco+, ele vem com um ESP32 integrado, acelerômetro, giroscópio, sensor de temperatura, e tem capacidade de controlar dois motores DC, LEDs e um buzzer. É o cérebro do sistema!';
@@ -514,15 +518,13 @@
                 // --- Fallback Inteligente (com palavras-chave) ---
                 else if (normalizedCommand.includes('bloco mais') || normalizedCommand.includes('blocomais') || normalizedCommand.includes('asthor barden') || normalizedCommand.includes('astor barden') || normalizedCommand.includes('steamak') || normalizedCommand.includes('kit') || normalizedCommand.includes('bot') || normalizedCommand.includes('eletronica') || normalizedCommand.includes('robotica') || normalizedCommand.includes('pedagogico') || normalizedCommand.includes('projeto') || normalizedCommand.includes('curso') || normalizedCommand.includes('arduino') || normalizedCommand.includes('laser') || normalizedCommand.includes('corel') || normalizedCommand.includes('maquina') || normalizedCommand.includes('quebrar') || normalizedCommand.includes('manutencao')) {
                     let extractedPhrase = command;
-                    // Tenta extrair uma parte relevante da frase do usuário
                     const keywords = ['bloco mais', 'blocomais', 'asthor barden', 'astor barden', 'steamak', 'kit', 'bot', 'eletronica', 'robotica', 'pedagogico', 'projeto', 'curso', 'arduino', 'laser', 'corel', 'maquina', 'quebrar', 'manutencao'];
                     let foundKeyword = false;
                     for (const keyword of keywords) {
                         if (normalizedCommand.includes(keyword)) {
                             const index = normalizedCommand.indexOf(keyword);
-                            // Pega a frase ao redor da palavra-chave
                             extractedPhrase = command.substring(Math.max(0, index - 15), Math.min(command.length, index + keyword.length + 25)).trim();
-                            if (extractedPhrase.length > 60) { // Limita o tamanho para não ficar muito longo
+                            if (extractedPhrase.length > 60) {
                                 extractedPhrase = extractedPhrase.substring(0, 57) + '...';
                             }
                             foundKeyword = true;
