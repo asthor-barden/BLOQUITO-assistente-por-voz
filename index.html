@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloquito - Assistente de Voz Universal</title>
+    <title>Bloquito - Reconhecimento de Voz Real</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Annyang.js para melhor compatibilidade -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -39,7 +37,6 @@
         .header {
             text-align: center;
             margin-bottom: 25px;
-            position: relative;
         }
         
         h1 {
@@ -55,7 +52,7 @@
             opacity: 0.9;
         }
         
-        .compatibility-info {
+        .engine-info {
             background: rgba(76, 175, 80, 0.2);
             padding: 12px;
             border-radius: 10px;
@@ -65,12 +62,12 @@
             font-size: 13px;
         }
         
-        .compatibility-info.warning {
+        .engine-info.warning {
             background: rgba(255, 152, 0, 0.2);
             border-color: rgba(255, 152, 0, 0.3);
         }
         
-        .compatibility-info.error {
+        .engine-info.error {
             background: rgba(244, 67, 54, 0.2);
             border-color: rgba(244, 67, 54, 0.3);
         }
@@ -91,7 +88,6 @@
             height: 20px;
             border-radius: 50%;
             background: #f44336;
-            position: relative;
         }
         
         .status-indicator.listening {
@@ -171,7 +167,6 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            position: relative;
         }
         
         .btn:hover {
@@ -206,32 +201,6 @@
         
         .btn.talk i {
             font-size: 24px;
-        }
-        
-        .method-selector {
-            display: flex;
-            gap: 8px;
-            margin: 15px 0;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 8px;
-            border-radius: 25px;
-        }
-        
-        .method-btn {
-            flex: 1;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 20px;
-            color: white;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .method-btn.active {
-            background: #FFD700;
-            color: #333;
         }
         
         .conversation {
@@ -284,6 +253,16 @@
             margin-top: 5px;
         }
         
+        .confidence-indicator {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
         .commands {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px 20px;
@@ -314,21 +293,17 @@
             font-size: 13px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
         
-        .command-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .mic-icon {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.7);
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 100px;
+            overflow-y: auto;
         }
         
         /* Responsividade */
@@ -350,45 +325,23 @@
             .btn.talk {
                 padding: 18px;
             }
-            
-            .message {
-                font-size: 14px;
-                padding: 10px 14px;
-            }
-            
-            .commands-grid {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            }
-            
-            .command-item {
-                font-size: 12px;
-                padding: 8px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <i class="fas fa-microphone mic-icon"></i>
-            <h1>Bloquito</h1>
-            <div class="subtitle">Assistente de Voz Universal</div>
+            <h1>🎤 Bloquito</h1>
+            <div class="subtitle">Reconhecimento de Voz Real</div>
         </div>
         
-        <div class="compatibility-info" id="compatibilityInfo">
-            <i class="fas fa-info-circle"></i>
-            Verificando compatibilidade...
-        </div>
-        
-        <div class="method-selector">
-            <button class="method-btn active" id="webSpeechBtn">Web Speech</button>
-            <button class="method-btn" id="annyangBtn">Annyang</button>
-            <button class="method-btn" id="recordBtn">Gravação</button>
+        <div class="engine-info" id="engineInfo">
+            <i class="fas fa-cog fa-spin"></i> Inicializando motor de reconhecimento...
         </div>
         
         <div class="status-container">
             <div class="status-indicator" id="statusIndicator"></div>
-            <div class="status-text" id="statusText">Não está ouvindo</div>
+            <div class="status-text" id="statusText">Inicializando...</div>
         </div>
         
         <div class="volume-container">
@@ -403,56 +356,53 @@
         
         <div class="controls">
             <button class="btn" id="startBtn">
-                <i class="fas fa-play"></i> Iniciar Reconhecimento
+                <i class="fas fa-play"></i> Iniciar Escuta Contínua
             </button>
             <button class="btn" id="stopBtn" disabled>
-                <i class="fas fa-stop"></i> Parar Reconhecimento
+                <i class="fas fa-stop"></i> Parar Escuta
             </button>
             <button class="btn talk" id="talkButton">
-                <i class="fas fa-microphone"></i> Segurar para Falar
+                <i class="fas fa-microphone"></i> Pressionar e Falar
             </button>
         </div>
 
-        <div class="conversation" id="conversation">
-            <div class="message bot-message">
-                Olá! Eu sou o Bloquito. Escolha um método de reconhecimento acima e comece a conversar!
+        <div class="conversation" id="conversation"></div>
+        
+        <div class="commands">
+            <h3>Comandos Disponíveis</h3>
+            <div class="commands-grid">
+                <div class="command-item">Oi / Olá</div>
+                <div class="command-item">Como você está?</div>
+                <div class="command-item">Quem é você?</div>
+                <div class="command-item">Que horas são?</div>
+                <div class="command-item">O que é Bloco+?</div>
+                <div class="command-item">O que é STEAMAKER?</div>
+                <div class="command-item">Fale sobre CorelLASER</div>
+                <div class="command-item">Parar</div>
             </div>
         </div>
         
-        <div class="commands">
-            <h3>Comandos Reconhecidos</h3>
-            <div class="commands-grid">
-                <div class="command-item" onclick="assistant.simulateCommand('oi')">Oi / Olá</div>
-                <div class="command-item" onclick="assistant.simulateCommand('bom dia')">Bom dia / Boa tarde</div>
-                <div class="command-item" onclick="assistant.simulateCommand('como você está')">Como você está?</div>
-                <div class="command-item" onclick="assistant.simulateCommand('quem é você')">Quem é você?</div>
-                <div class="command-item" onclick="assistant.simulateCommand('que horas são')">Que horas são?</div>
-                <div class="command-item" onclick="assistant.simulateCommand('o que é bloco mais')">O que é Bloco+?</div>
-                <div class="command-item" onclick="assistant.simulateCommand('o que é steamaker')">O que é STEAMAKER?</div>
-                <div class="command-item" onclick="assistant.simulateCommand('fale sobre o corellaser')">Fale sobre o CorelLASER</div>
-            </div>
-        </div>
+        <div class="debug-info" id="debugInfo"></div>
     </div>
 
     <script>
-        class UniversalVoiceAssistant {
+        class RealVoiceRecognition {
             constructor() {
-                this.currentMethod = 'webspeech';
                 this.recognition = null;
                 this.isListening = false;
-                this.recognitionActiveByUser = false;
+                this.continuousMode = false;
                 this.audioContext = null;
                 this.microphoneStream = null;
                 this.analyser = null;
                 this.dataArray = null;
-                this.mediaRecorder = null;
-                this.audioChunks = [];
-                this.isRecording = false;
+                this.lastResult = '';
+                this.recognitionEngine = 'unknown';
+                this.debugMode = true;
                 
                 this.initializeElements();
-                this.checkCompatibility();
-                this.setupEventListeners();
+                this.detectAndSetupRecognition();
                 this.setupAudioMonitoring();
+                this.setupEventListeners();
             }
             
             initializeElements() {
@@ -463,43 +413,212 @@
                 this.talkButton = document.getElementById('talkButton');
                 this.conversationEl = document.getElementById('conversation');
                 this.volumeBar = document.getElementById('volumeBar');
-                this.compatibilityInfo = document.getElementById('compatibilityInfo');
-                this.webSpeechBtn = document.getElementById('webSpeechBtn');
-                this.annyangBtn = document.getElementById('annyangBtn');
-                this.recordBtn = document.getElementById('recordBtn');
+                this.engineInfo = document.getElementById('engineInfo');
+                this.debugInfo = document.getElementById('debugInfo');
             }
             
-            checkCompatibility() {
-                const hasWebSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-                const hasAnnyang = typeof annyang !== 'undefined';
-                const hasMediaRecorder = 'MediaRecorder' in window;
+            log(message) {
+                if (this.debugMode) {
+                    const time = new Date().toLocaleTimeString();
+                    this.debugInfo.innerHTML += `[${time}] ${message}<br>`;
+                    this.debugInfo.scrollTop = this.debugInfo.scrollHeight;
+                    console.log(`[Bloquito] ${message}`);
+                }
+            }
+            
+            async detectAndSetupRecognition() {
+                this.log('Detectando capacidades de reconhecimento...');
                 
-                let message = '';
-                let className = 'compatibility-info';
-                
-                if (hasWebSpeech && hasAnnyang && hasMediaRecorder) {
-                    message = '<i class="fas fa-check-circle"></i> Todos os métodos de reconhecimento disponíveis!';
-                    className += '';
-                } else if (hasWebSpeech || hasAnnyang) {
-                    message = '<i class="fas fa-exclamation-triangle"></i> Reconhecimento parcialmente disponível';
-                    className += ' warning';
+                // Tenta diferentes implementações
+                if ('webkitSpeechRecognition' in window) {
+                    this.recognitionEngine = 'webkit';
+                    this.log('Usando WebKit Speech Recognition');
+                } else if ('SpeechRecognition' in window) {
+                    this.recognitionEngine = 'standard';
+                    this.log('Usando Standard Speech Recognition');
                 } else {
-                    message = '<i class="fas fa-times-circle"></i> Reconhecimento limitado - use gravação manual';
-                    className += ' error';
+                    this.recognitionEngine = 'none';
+                    this.log('Nenhum motor de reconhecimento encontrado');
+                    this.showEngineError();
+                    return;
                 }
                 
-                this.compatibilityInfo.innerHTML = message;
-                this.compatibilityInfo.className = className;
+                await this.setupRecognition();
+            }
+            
+            async setupRecognition() {
+                try {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    
+                    // Configurações otimizadas para mobile
+                    this.recognition.continuous = false; // Mudança importante para mobile
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'pt-BR';
+                    this.recognition.maxAlternatives = 3;
+                    
+                    // Configurações específicas para WebKit (Chrome/Safari mobile)
+                    if (this.recognitionEngine === 'webkit') {
+                        this.recognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize';
+                    }
+                    
+                    this.setupRecognitionEvents();
+                    this.showEngineSuccess();
+                    this.log('Motor de reconhecimento configurado com sucesso');
+                    
+                } catch (error) {
+                    this.log(`Erro ao configurar reconhecimento: ${error.message}`);
+                    this.showEngineError();
+                }
+            }
+            
+            setupRecognitionEvents() {
+                this.recognition.onstart = () => {
+                    this.log('Reconhecimento iniciado');
+                    this.isListening = true;
+                    this.updateStatus('🎤 Ouvindo...', 'listening');
+                    this.startBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+                };
                 
-                // Desabilita botões não suportados
-                if (!hasWebSpeech) this.webSpeechBtn.disabled = true;
-                if (!hasAnnyang) this.annyangBtn.disabled = true;
-                if (!hasMediaRecorder) this.recordBtn.disabled = true;
+                this.recognition.onresult = (event) => {
+                    this.handleRecognitionResult(event);
+                };
+                
+                this.recognition.onerror = (event) => {
+                    this.log(`Erro de reconhecimento: ${event.error}`);
+                    this.handleRecognitionError(event);
+                };
+                
+                this.recognition.onend = () => {
+                    this.log('Reconhecimento finalizado');
+                    this.isListening = false;
+                    this.updateStatus('Não está ouvindo', 'not-listening');
+                    this.startBtn.disabled = false;
+                    this.stopBtn.disabled = true;
+                    
+                    // Reinicia automaticamente se estiver em modo contínuo
+                    if (this.continuousMode) {
+                        setTimeout(() => {
+                            if (this.continuousMode) {
+                                this.log('Reiniciando reconhecimento contínuo...');
+                                this.startRecognition();
+                            }
+                        }, 100); // Delay mínimo para evitar loops
+                    }
+                };
+                
+                this.recognition.onnomatch = () => {
+                    this.log('Nenhuma correspondência encontrada');
+                };
+                
+                this.recognition.onsoundstart = () => {
+                    this.log('Som detectado');
+                };
+                
+                this.recognition.onsoundend = () => {
+                    this.log('Som finalizado');
+                };
+                
+                this.recognition.onspeechstart = () => {
+                    this.log('Fala detectada');
+                    this.updateStatus('🗣️ Fala detectada...', 'processing');
+                };
+                
+                this.recognition.onspeechend = () => {
+                    this.log('Fala finalizada');
+                };
+            }
+            
+            handleRecognitionResult(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                let confidence = 0;
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    const transcript = result[0].transcript;
+                    confidence = result[0].confidence || 0;
+                    
+                    if (result.isFinal) {
+                        finalTranscript += transcript;
+                        this.log(`Resultado final: "${transcript}" (confiança: ${confidence.toFixed(2)})`);
+                    } else {
+                        interimTranscript += transcript;
+                        this.log(`Resultado parcial: "${transcript}"`);
+                    }
+                }
+                
+                // Atualiza status com resultado parcial
+                if (interimTranscript) {
+                    this.updateStatus(`📝 "${interimTranscript}"`, 'processing');
+                }
+                
+                // Processa resultado final
+                if (finalTranscript && finalTranscript !== this.lastResult) {
+                    this.lastResult = finalTranscript;
+                    const cleanTranscript = finalTranscript.trim();
+                    
+                    if (cleanTranscript.length > 0) {
+                        this.addMessage(`Você: ${cleanTranscript}`, 'user', confidence);
+                        this.processCommand(cleanTranscript.toLowerCase());
+                    }
+                }
+            }
+            
+            handleRecognitionError(event) {
+                let errorMessage = '';
+                let shouldRestart = false;
+                
+                switch (event.error) {
+                    case 'no-speech':
+                        errorMessage = 'Nenhuma fala detectada';
+                        shouldRestart = this.continuousMode;
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Erro na captura de áudio';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Permissão de microfone negada';
+                        this.continuousMode = false;
+                        break;
+                    case 'network':
+                        errorMessage = 'Erro de rede';
+                        shouldRestart = this.continuousMode;
+                        break;
+                    case 'aborted':
+                        errorMessage = 'Reconhecimento abortado';
+                        break;
+                    default:
+                        errorMessage = `Erro desconhecido: ${event.error}`;
+                }
+                
+                if (event.error !== 'no-speech') {
+                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                }
+                
+                this.updateStatus(`❌ ${errorMessage}`, 'error');
+                
+                // Tenta reiniciar se apropriado
+                if (shouldRestart) {
+                    setTimeout(() => {
+                        if (this.continuousMode) {
+                            this.startRecognition();
+                        }
+                    }, 1000);
+                }
             }
             
             async setupAudioMonitoring() {
                 try {
-                    this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.microphoneStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: 44100
+                        }
+                    });
                     
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
@@ -511,23 +630,13 @@
                     source.connect(this.analyser);
                     this.monitorAudio();
                     
-                    this.setupCurrentMethod();
+                    this.log('Monitoramento de áudio configurado');
+                    this.updateStatus('✅ Pronto para usar', 'ready');
+                    
                 } catch (error) {
-                    console.error('Erro ao acessar microfone:', error);
+                    this.log(`Erro no acesso ao microfone: ${error.message}`);
                     this.handleMicrophoneError(error);
                 }
-            }
-            
-            handleMicrophoneError(error) {
-                let errorMessage = 'Erro ao acessar microfone.';
-                if (error.name === 'NotAllowedError') {
-                    errorMessage = 'Permissão de microfone negada. Atualize as permissões nas configurações do navegador.';
-                    this.statusText.textContent = 'Permissão negada';
-                    this.statusIndicator.style.backgroundColor = '#FF9800';
-                }
-                this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                this.startBtn.disabled = true;
-                this.talkButton.disabled = true;
             }
             
             monitorAudio() {
@@ -546,250 +655,116 @@
             }
             
             setupEventListeners() {
-                this.startBtn.addEventListener('click', () => this.startListening());
-                this.stopBtn.addEventListener('click', () => this.stopListening());
+                this.startBtn.addEventListener('click', () => this.startContinuousMode());
+                this.stopBtn.addEventListener('click', () => this.stopContinuousMode());
                 
-                this.talkButton.addEventListener('mousedown', () => this.startRecording());
-                this.talkButton.addEventListener('mouseup', () => this.stopRecording());
+                // Push-to-talk
+                this.talkButton.addEventListener('mousedown', () => this.startSingleRecognition());
+                this.talkButton.addEventListener('mouseup', () => this.stopSingleRecognition());
+                
                 this.talkButton.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    this.startRecording();
+                    this.startSingleRecognition();
                 });
+                
                 this.talkButton.addEventListener('touchend', (e) => {
                     e.preventDefault();
-                    this.stopRecording();
+                    this.stopSingleRecognition();
                 });
                 
-                // Method selector
-                this.webSpeechBtn.addEventListener('click', () => this.switchMethod('webspeech'));
-                this.annyangBtn.addEventListener('click', () => this.switchMethod('annyang'));
-                this.recordBtn.addEventListener('click', () => this.switchMethod('recording'));
+                // Previne comportamentos indesejados em mobile
+                this.talkButton.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                });
             }
             
-            switchMethod(method) {
-                this.stopListening();
-                this.currentMethod = method;
-                
-                // Update UI
-                document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
-                if (method === 'webspeech') this.webSpeechBtn.classList.add('active');
-                else if (method === 'annyang') this.annyangBtn.classList.add('active');
-                else if (method === 'recording') this.recordBtn.classList.add('active');
-                
-                this.setupCurrentMethod();
-                this.addMessage(`Bloquito: Método alterado para ${this.getMethodName(method)}`, 'bot');
-            }
-            
-            getMethodName(method) {
-                switch(method) {
-                    case 'webspeech': return 'Web Speech API';
-                    case 'annyang': return 'Annyang.js';
-                    case 'recording': return 'Gravação Manual';
-                    default: return 'Desconhecido';
-                }
-            }
-            
-            setupCurrentMethod() {
-                switch(this.currentMethod) {
-                    case 'webspeech':
-                        this.setupWebSpeechRecognition();
-                        break;
-                    case 'annyang':
-                        this.setupAnnyangRecognition();
-                        break;
-                    case 'recording':
-                        // Método de gravação não precisa de setup especial
-                        break;
-                }
-            }
-            
-            setupWebSpeechRecognition() {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    return;
-                }
-                
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                this.recognition = new SpeechRecognition();
-                
+            startContinuousMode() {
+                this.log('Iniciando modo contínuo');
+                this.continuousMode = true;
                 this.recognition.continuous = true;
-                this.recognition.interimResults = true;
-                this.recognition.lang = 'pt-BR';
-                
-                this.recognition.onstart = () => this.onStart();
-                this.recognition.onresult = (event) => this.onWebSpeechResult(event);
-                this.recognition.onerror = (event) => this.onError(event);
-                this.recognition.onend = () => this.onEnd();
+                this.startRecognition();
             }
             
-            setupAnnyangRecognition() {
-                if (typeof annyang === 'undefined') return;
-                
-                // Define comandos para Annyang
-                const commands = {
-                    '*text': (text) => {
-                        this.addMessage(`Você: ${text}`, 'user');
-                        this.processCommand(text.toLowerCase());
-                    }
-                };
-                
-                annyang.addCommands(commands);
-                annyang.setLanguage('pt-BR');
-                
-                // Callbacks do Annyang
-                annyang.addCallback('start', () => this.onStart());
-                annyang.addCallback('end', () => this.onEnd());
-                annyang.addCallback('error', (error) => this.onError(error));
+            stopContinuousMode() {
+                this.log('Parando modo contínuo');
+                this.continuousMode = false;
+                this.stopRecognition();
             }
             
-            startListening() {
-                if (!this.microphoneStream) return;
-                
-                this.recognitionActiveByUser = true;
-                
-                switch(this.currentMethod) {
-                    case 'webspeech':
-                        if (this.recognition) {
-                            try {
-                                this.recognition.start();
-                            } catch (error) {
-                                this.handleRecognitionError(error);
-                            }
-                        }
-                        break;
-                    case 'annyang':
-                        if (typeof annyang !== 'undefined') {
-                            annyang.start();
-                        }
-                        break;
-                    case 'recording':
-                        this.addMessage('Bloquito: Modo gravação ativo. Use "Segurar para Falar" para gravar comandos.', 'bot');
-                        this.updateStatus('Modo gravação ativo', 'listening');
-                        break;
-                }
-            }
-            
-            stopListening() {
-                this.recognitionActiveByUser = false;
-                
-                switch(this.currentMethod) {
-                    case 'webspeech':
-                        if (this.recognition) {
-                            this.recognition.stop();
-                        }
-                        break;
-                    case 'annyang':
-                        if (typeof annyang !== 'undefined') {
-                            annyang.abort();
-                        }
-                        break;
-                    case 'recording':
-                        this.updateStatus('Não está ouvindo', 'not-listening');
-                        break;
-                }
-            }
-            
-            startRecording() {
-                if (!this.microphoneStream) return;
-                
-                this.audioChunks = [];
-                this.mediaRecorder = new MediaRecorder(this.microphoneStream);
-                
-                this.mediaRecorder.ondataavailable = (event) => {
-                    this.audioChunks.push(event.data);
-                };
-                
-                this.mediaRecorder.onstop = () => {
-                    this.processRecording();
-                };
-                
-                this.mediaRecorder.start();
-                this.isRecording = true;
+            startSingleRecognition() {
+                this.log('Iniciando reconhecimento único (push-to-talk)');
+                this.recognition.continuous = false;
                 this.talkButton.classList.add('recording');
-                this.updateStatus('Gravando...', 'processing');
+                this.startRecognition();
             }
             
-            stopRecording() {
-                if (this.mediaRecorder && this.isRecording) {
-                    this.mediaRecorder.stop();
-                    this.isRecording = false;
-                    this.talkButton.classList.remove('recording');
-                }
+            stopSingleRecognition() {
+                this.log('Parando reconhecimento único');
+                this.talkButton.classList.remove('recording');
+                this.stopRecognition();
             }
             
-            processRecording() {
-                // Simula processamento de áudio gravado
-                const userInput = prompt('O que você disse? (Simulação de reconhecimento)');
-                if (userInput && userInput.trim()) {
-                    this.addMessage(`Você (gravado): ${userInput}`, 'user');
-                    this.processCommand(userInput.toLowerCase());
-                }
-                this.updateStatus('Não está ouvindo', 'not-listening');
-            }
-            
-            onStart() {
-                this.isListening = true;
-                this.updateStatus(`Ouvindo (${this.getMethodName(this.currentMethod)})...`, 'listening');
-                this.startBtn.disabled = true;
-                this.stopBtn.disabled = false;
-            }
-            
-            onWebSpeechResult(event) {
-                let finalTranscript = '';
+            startRecognition() {
+                if (!this.recognition || this.isListening) return;
                 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+                try {
+                    // Força o contexto de áudio a ser ativo (importante para mobile)
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    
+                    this.recognition.start();
+                } catch (error) {
+                    this.log(`Erro ao iniciar reconhecimento: ${error.message}`);
+                    if (error.name === 'InvalidStateError') {
+                        // Reconhecimento já está ativo, força parada e reinicia
+                        this.recognition.stop();
+                        setTimeout(() => {
+                            this.recognition.start();
+                        }, 100);
                     }
                 }
-                
-                finalTranscript = finalTranscript.trim();
-                
-                if (finalTranscript) {
-                    this.addMessage(`Você: ${finalTranscript}`, 'user');
-                    this.processCommand(finalTranscript.toLowerCase());
+            }
+            
+            stopRecognition() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
                 }
             }
             
-            onError(event) {
-                if (event.error !== 'no-speech') {
-                    console.error('Erro no reconhecimento:', event.error);
-                    this.updateStatus('Erro no reconhecimento', 'error');
-                }
+            showEngineSuccess() {
+                this.engineInfo.innerHTML = `<i class="fas fa-check-circle"></i> Motor: ${this.recognitionEngine.toUpperCase()} - Funcionando`;
+                this.engineInfo.className = 'engine-info';
             }
             
-            onEnd() {
-                this.isListening = false;
-                this.updateStatus('Não está ouvindo', 'not-listening');
-                this.startBtn.disabled = false;
-                this.stopBtn.disabled = true;
+            showEngineError() {
+                this.engineInfo.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Reconhecimento de voz não disponível neste navegador';
+                this.engineInfo.className = 'engine-info error';
+                this.startBtn.disabled = true;
+                this.talkButton.disabled = true;
+            }
+            
+            handleMicrophoneError(error) {
+                let errorMessage = 'Erro ao acessar microfone';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Permissão de microfone negada. Atualize as permissões do navegador.';
+                }
                 
-                if (this.recognitionActiveByUser && this.currentMethod !== 'recording') {
-                    setTimeout(() => {
-                        if (this.recognitionActiveByUser) {
-                            this.startListening();
-                        }
-                    }, 500);
-                }
-            }
-            
-            handleRecognitionError(error) {
-                console.error('Erro ao iniciar reconhecimento:', error);
-                this.addMessage('Bloquito: Não foi possível iniciar o reconhecimento. Tente outro método.', 'bot');
-                this.updateStatus('Erro ao iniciar', 'error');
-            }
-            
-            simulateCommand(command) {
-                this.addMessage(`Você (clique): ${command}`, 'user');
-                this.processCommand(command.toLowerCase());
+                this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                this.updateStatus('❌ Sem microfone', 'error');
+                this.startBtn.disabled = true;
+                this.talkButton.disabled = true;
             }
             
             processCommand(command) {
-                let response = '';
                 const normalizedCommand = this.normalizeText(command);
                 const now = new Date();
                 const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+                let response = '';
 
-                // Comandos gerais
+                this.log(`Processando comando: "${command}"`);
+
+                // Comandos básicos
                 if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || 
                     normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || 
                     normalizedCommand.includes('boa noite')) {
@@ -800,43 +775,38 @@
                     response = 'Estou bem, obrigado! E você, como está?';
                 } 
                 else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || 
-                         normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome')) {
-                    response = 'Eu sou o Bloquito, seu assistente de voz especializado em kits educacionais da Asthor Barden! Posso usar diferentes métodos de reconhecimento para melhor compatibilidade.';
+                         normalizedCommand.includes('fale sobre voce')) {
+                    response = 'Eu sou o Bloquito, seu assistente de voz com reconhecimento real! Especializado em produtos da Asthor Barden.';
                 } 
                 else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
                     response = `Agora são ${timeString}.`;
                 } 
                 else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
                     response = 'Parando o reconhecimento. Até mais!';
-                    this.stopListening();
+                    this.stopContinuousMode();
                 }
-                // Perguntas específicas sobre produtos
-                else if (normalizedCommand.includes('o que e bloco mais') || 
-                         normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica com componentes em blocos, facilitando conexões físicas de forma prática e modular. É focado em robótica, automação e eletrônica básica.';
+                // Comandos específicos dos produtos
+                else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('fale sobre o bloco mais')) {
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, com componentes em blocos para facilitar conexões físicas. Focado em robótica, automação e eletrônica básica.';
                 } 
                 else if (normalizedCommand.includes('o que e steamaker')) {
-                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em diferentes tipos de montagem.';
+                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em montagens.';
                 } 
                 else if (normalizedCommand.includes('bloco mais bot')) {
-                    response = 'O Bloco+Bot é o microcontrolador central do kit, equipado com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
+                    response = 'O Bloco+Bot é o microcontrolador central com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
                 } 
                 else if (normalizedCommand.includes('corellaser')) {
-                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden para projetos educacionais.';
+                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em projetos educacionais com os kits Asthor Barden.';
                 }
-                else if (normalizedCommand.includes('metodo') || normalizedCommand.includes('reconhecimento')) {
-                    response = `Atualmente estou usando o método ${this.getMethodName(this.currentMethod)}. Você pode alternar entre Web Speech API, Annyang.js ou gravação manual para melhor compatibilidade.`;
-                }
-                // Fallback
                 else {
-                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden. Você também pode tentar outro método de reconhecimento.';
+                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden.';
                 }
 
                 if (response) {
                     setTimeout(() => {
                         this.addMessage(`Bloquito: ${response}`, 'bot');
                         this.speak(response);
-                    }, 500);
+                    }, 300);
                 }
             }
             
@@ -850,24 +820,29 @@
             
             speak(text) {
                 if ('speechSynthesis' in window) {
+                    // Para o reconhecimento durante a fala para evitar feedback
+                    const wasListening = this.isListening;
+                    if (wasListening) {
+                        this.stopRecognition();
+                    }
+                    
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'pt-BR';
                     utterance.rate = 0.9;
-                    
-                    // Para o reconhecimento durante a fala
-                    if (this.isListening) {
-                        this.stopListening();
-                    }
+                    utterance.pitch = 1;
+                    utterance.volume = 0.8;
                     
                     utterance.onend = () => {
-                        // Reinicia o reconhecimento se o usuário ainda estiver ativo
-                        if (this.recognitionActiveByUser && this.currentMethod !== 'recording') {
+                        // Reinicia o reconhecimento se estava ativo
+                        if (wasListening && this.continuousMode) {
                             setTimeout(() => {
-                                if (this.recognitionActiveByUser) {
-                                    this.startListening();
-                                }
-                            }, 300);
+                                this.startRecognition();
+                            }, 500);
                         }
+                    };
+                    
+                    utterance.onerror = (event) => {
+                        this.log(`Erro na síntese de fala: ${event.error}`);
                     };
                     
                     speechSynthesis.speak(utterance);
@@ -878,27 +853,38 @@
                 this.statusText.textContent = message;
                 
                 this.statusIndicator.className = 'status-indicator';
+                this.statusIndicator.style.backgroundColor = '';
+                this.statusIndicator.style.animation = '';
+                
                 if (state === 'listening') {
                     this.statusIndicator.classList.add('listening');
                 } else if (state === 'processing') {
                     this.statusIndicator.classList.add('processing');
                 } else if (state === 'error') {
-                    this.statusIndicator.style.backgroundColor = '#FF9800';
-                    this.statusIndicator.style.animation = 'none';
-                } else {
                     this.statusIndicator.style.backgroundColor = '#f44336';
-                    this.statusIndicator.style.animation = 'none';
+                } else if (state === 'ready') {
+                    this.statusIndicator.style.backgroundColor = '#4CAF50';
+                } else {
+                    this.statusIndicator.style.backgroundColor = '#666';
                 }
             }
             
-            addMessage(message, type) {
+            addMessage(message, type, confidence = null) {
                 const now = new Date();
                 const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
                 
                 const messageEl = document.createElement('div');
                 messageEl.className = `message ${type}-message`;
+                
+                let confidenceIndicator = '';
+                if (confidence !== null && type === 'user') {
+                    const confidencePercent = Math.round(confidence * 100);
+                    confidenceIndicator = `<div class="confidence-indicator">${confidencePercent}%</div>`;
+                }
+                
                 messageEl.innerHTML = `
                     ${message}
+                    ${confidenceIndicator}
                     <div class="message-time">${timeString}</div>
                 `;
                 
@@ -907,17 +893,13 @@
             }
         }
         
-        // Variável global para permitir acesso aos comandos clicáveis
-        let assistant;
-        
-        // Inicializa o assistente quando a página carrega
+        // Inicializa o sistema quando a página carrega
         document.addEventListener('DOMContentLoaded', () => {
-            assistant = new UniversalVoiceAssistant();
+            const assistant = new RealVoiceRecognition();
             
-            // Adiciona mensagem de boas-vindas após um breve delay
             setTimeout(() => {
-                assistant.addMessage('Bloquito: Sistema iniciado! Escolha um método de reconhecimento e comece a conversar.', 'bot');
-            }, 1000);
+                assistant.addMessage('Bloquito: Sistema de reconhecimento real iniciado! Teste os comandos de voz.', 'bot');
+            }, 2000);
         });
     </script>
 </body>
