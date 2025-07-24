@@ -1363,75 +1363,85 @@
             }
             
             setupVoiceRecognition() {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    console.log('Reconhecimento de voz não disponível');
-                    return;
-                }
-                
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                this.recognition = new SpeechRecognition();
-                
-                this.recognition.continuous = true;
-                this.recognition.interimResults = true;
-                this.recognition.lang = 'pt-BR';
-                this.recognition.maxAlternatives = 1;
-                
-                this.recognition.onstart = () => {
-                    this.isListening = true;
-                };
-                
-                this.recognition.onresult = (event) => {
-                    let interimTranscript = '';
-                    let finalTranscript = '';
-                    let confidence = 0;
-                    
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const result = event.results[i];
-                        const transcript = result[0].transcript;
-                        confidence = result[0].confidence || 0;
-                        
-                        if (result.isFinal) {
-                            finalTranscript += transcript;
-                        } else {
-                            interimTranscript += transcript;
-                        }
-                    }
-                    
-                    if (this.isVoiceMode) {
-                        if (interimTranscript) {
-                            this.voiceSubtitle.textContent = `"${interimTranscript}"`;
-                        }
-                        
-                        if (finalTranscript) {
-                            const cleanTranscript = finalTranscript.trim();
-                            if (cleanTranscript.length > 0) {
-                                this.addMessage(cleanTranscript, 'user', confidence);
-                                this.processCommand(cleanTranscript.toLowerCase());
-                            }
-                        }
-                    }
-                };
-                
-                this.recognition.onerror = (event) => {
-                    console.error('Erro no reconhecimento:', event.error);
-                    if (this.isVoiceMode && event.error !== 'no-speech') {
-                        this.voiceStatus.textContent = 'Erro no reconhecimento';
-                        this.voiceSubtitle.textContent = 'Tente falar novamente ou verifique o microfone';
-                    }
-                };
-                
-                this.recognition.onend = () => {
-                    this.isListening = false;
-                    if (this.isVoiceMode && !this.isMuted) {
-                        setTimeout(() => {
-                            if (this.isVoiceMode && !this.isMuted) {
-                                this.startListening();
-                            }
-                        }, 1000);
-                    }
-                };
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.log('Reconhecimento de voz não disponível');
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SpeechRecognition();
+    
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'pt-BR';
+    this.recognition.maxAlternatives = 1;
+    
+    this.recognition.onstart = () => {
+        this.isListening = true;
+    };
+    
+    this.recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        let confidence = 0;
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            const transcript = result[0].transcript;
+            confidence = result[0].confidence || 0;
+            
+            if (result.isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        
+        if (this.isVoiceMode) {
+            if (interimTranscript) {
+                this.voiceSubtitle.textContent = `"${interimTranscript}"`;
             }
             
+            if (finalTranscript) {
+                const cleanTranscript = finalTranscript.trim();
+                // Só processa se tiver conteúdo significativo e confiança mínima
+                if (cleanTranscript.length > 2 && confidence > 0.3) {
+                    this.addMessage(cleanTranscript, 'user', confidence);
+                    this.processCommand(cleanTranscript.toLowerCase());
+                }
+            }
+        }
+    };
+    
+    this.recognition.onerror = (event) => {
+        console.error('Erro no reconhecimento:', event.error);
+        if (this.isVoiceMode && event.error !== 'no-speech') {
+            this.voiceStatus.textContent = 'Erro no reconhecimento';
+            this.voiceSubtitle.textContent = 'Tente falar novamente ou verifique o microfone';
+            
+            // Tenta reiniciar após erro
+            setTimeout(() => {
+                if (this.isVoiceMode && !this.isMuted) {
+                    this.voiceStatus.textContent = 'Ouvindo';
+                    this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
+                    this.startListening();
+                }
+            }, 2000);
+        }
+    };
+    
+    this.recognition.onend = () => {
+        this.isListening = false;
+        if (this.isVoiceMode && !this.isMuted) {
+            // Delay menor para reiniciar quando para naturalmente
+            setTimeout(() => {
+                if (this.isVoiceMode && !this.isMuted) {
+                    this.startListening();
+                }
+            }, 1500);
+        }
+    };
+}
             startListening() {
                 if (!this.recognition || this.isListening || this.isMuted) return;
                 
