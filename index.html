@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloquito - Assistente de Voz para Celular</title>
+    <title>Bloquito - Assistente de Voz Universal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Annyang.js para melhor compatibilidade -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -53,6 +55,26 @@
             opacity: 0.9;
         }
         
+        .compatibility-info {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .compatibility-info.warning {
+            background: rgba(255, 152, 0, 0.2);
+            border-color: rgba(255, 152, 0, 0.3);
+        }
+        
+        .compatibility-info.error {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.3);
+        }
+        
         .status-container {
             display: flex;
             align-items: center;
@@ -69,6 +91,7 @@
             height: 20px;
             border-radius: 50%;
             background: #f44336;
+            position: relative;
         }
         
         .status-indicator.listening {
@@ -76,10 +99,20 @@
             animation: pulse 1.5s infinite;
         }
         
+        .status-indicator.processing {
+            background: #FF9800;
+            animation: spin 1s linear infinite;
+        }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         .status-text {
@@ -138,6 +171,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            position: relative;
         }
         
         .btn:hover {
@@ -165,8 +199,39 @@
             background: #E64A19;
         }
         
+        .btn.talk.recording {
+            background: #E64A19;
+            animation: pulse 1s infinite;
+        }
+        
         .btn.talk i {
             font-size: 24px;
+        }
+        
+        .method-selector {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 25px;
+        }
+        
+        .method-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .method-btn.active {
+            background: #FFD700;
+            color: #333;
         }
         
         .conversation {
@@ -249,21 +314,13 @@
             font-size: 13px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .permission-info {
-            background: rgba(255, 152, 0, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            border: 1px solid rgba(255, 152, 0, 0.3);
-            text-align: center;
-            font-size: 14px;
-        }
-        
-        .permission-info i {
-            color: #FFC107;
-            margin-right: 8px;
+        .command-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
         
         .mic-icon {
@@ -308,28 +365,6 @@
                 padding: 8px;
             }
         }
-        
-        @media (max-width: 400px) {
-            h1 {
-                font-size: 20px;
-            }
-            
-            .subtitle {
-                font-size: 12px;
-            }
-            
-            .btn {
-                font-size: 14px;
-            }
-            
-            .btn.talk {
-                font-size: 16px;
-            }
-            
-            .commands-grid {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
@@ -337,12 +372,18 @@
         <div class="header">
             <i class="fas fa-microphone mic-icon"></i>
             <h1>Bloquito</h1>
-            <div class="subtitle">Assistente de Voz para Celular</div>
+            <div class="subtitle">Assistente de Voz Universal</div>
         </div>
         
-        <div class="permission-info">
-            <i class="fas fa-exclamation-circle"></i>
-            Para usar, permita o acesso ao microfone quando solicitado
+        <div class="compatibility-info" id="compatibilityInfo">
+            <i class="fas fa-info-circle"></i>
+            Verificando compatibilidade...
+        </div>
+        
+        <div class="method-selector">
+            <button class="method-btn active" id="webSpeechBtn">Web Speech</button>
+            <button class="method-btn" id="annyangBtn">Annyang</button>
+            <button class="method-btn" id="recordBtn">Gravação</button>
         </div>
         
         <div class="status-container">
@@ -374,28 +415,29 @@
 
         <div class="conversation" id="conversation">
             <div class="message bot-message">
-                Olá! Eu sou o Bloquito. Para começar, toque em "Iniciar Reconhecimento" ou "Segurar para Falar".
+                Olá! Eu sou o Bloquito. Escolha um método de reconhecimento acima e comece a conversar!
             </div>
         </div>
         
         <div class="commands">
             <h3>Comandos Reconhecidos</h3>
             <div class="commands-grid">
-                <div class="command-item">Oi / Olá</div>
-                <div class="command-item">Bom dia / Boa tarde</div>
-                <div class="command-item">Como você está?</div>
-                <div class="command-item">Quem é você?</div>
-                <div class="command-item">Que horas são?</div>
-                <div class="command-item">O que é Bloco+?</div>
-                <div class="command-item">O que é STEAMAKER?</div>
-                <div class="command-item">Fale sobre o CorelLASER</div>
+                <div class="command-item" onclick="assistant.simulateCommand('oi')">Oi / Olá</div>
+                <div class="command-item" onclick="assistant.simulateCommand('bom dia')">Bom dia / Boa tarde</div>
+                <div class="command-item" onclick="assistant.simulateCommand('como você está')">Como você está?</div>
+                <div class="command-item" onclick="assistant.simulateCommand('quem é você')">Quem é você?</div>
+                <div class="command-item" onclick="assistant.simulateCommand('que horas são')">Que horas são?</div>
+                <div class="command-item" onclick="assistant.simulateCommand('o que é bloco mais')">O que é Bloco+?</div>
+                <div class="command-item" onclick="assistant.simulateCommand('o que é steamaker')">O que é STEAMAKER?</div>
+                <div class="command-item" onclick="assistant.simulateCommand('fale sobre o corellaser')">Fale sobre o CorelLASER</div>
             </div>
         </div>
     </div>
 
     <script>
-        class VoiceAssistant {
+        class UniversalVoiceAssistant {
             constructor() {
+                this.currentMethod = 'webspeech';
                 this.recognition = null;
                 this.isListening = false;
                 this.recognitionActiveByUser = false;
@@ -403,10 +445,12 @@
                 this.microphoneStream = null;
                 this.analyser = null;
                 this.dataArray = null;
-                this.beepSound = new Audio();
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.isRecording = false;
                 
                 this.initializeElements();
-                this.loadBeepSound();
+                this.checkCompatibility();
                 this.setupEventListeners();
                 this.setupAudioMonitoring();
             }
@@ -419,17 +463,43 @@
                 this.talkButton = document.getElementById('talkButton');
                 this.conversationEl = document.getElementById('conversation');
                 this.volumeBar = document.getElementById('volumeBar');
+                this.compatibilityInfo = document.getElementById('compatibilityInfo');
+                this.webSpeechBtn = document.getElementById('webSpeechBtn');
+                this.annyangBtn = document.getElementById('annyangBtn');
+                this.recordBtn = document.getElementById('recordBtn');
             }
             
-            loadBeepSound() {
-                // Beep curto para feedback
-                this.beepSound.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+            checkCompatibility() {
+                const hasWebSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+                const hasAnnyang = typeof annyang !== 'undefined';
+                const hasMediaRecorder = 'MediaRecorder' in window;
+                
+                let message = '';
+                let className = 'compatibility-info';
+                
+                if (hasWebSpeech && hasAnnyang && hasMediaRecorder) {
+                    message = '<i class="fas fa-check-circle"></i> Todos os métodos de reconhecimento disponíveis!';
+                    className += '';
+                } else if (hasWebSpeech || hasAnnyang) {
+                    message = '<i class="fas fa-exclamation-triangle"></i> Reconhecimento parcialmente disponível';
+                    className += ' warning';
+                } else {
+                    message = '<i class="fas fa-times-circle"></i> Reconhecimento limitado - use gravação manual';
+                    className += ' error';
+                }
+                
+                this.compatibilityInfo.innerHTML = message;
+                this.compatibilityInfo.className = className;
+                
+                // Desabilita botões não suportados
+                if (!hasWebSpeech) this.webSpeechBtn.disabled = true;
+                if (!hasAnnyang) this.annyangBtn.disabled = true;
+                if (!hasMediaRecorder) this.recordBtn.disabled = true;
             }
             
             async setupAudioMonitoring() {
                 try {
                     this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.setupSpeechRecognition();
                     
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
@@ -440,18 +510,24 @@
                     
                     source.connect(this.analyser);
                     this.monitorAudio();
+                    
+                    this.setupCurrentMethod();
                 } catch (error) {
                     console.error('Erro ao acessar microfone:', error);
-                    let errorMessage = 'Erro ao acessar microfone.';
-                    if (error.name === 'NotAllowedError') {
-                        errorMessage = 'Permissão de microfone negada. Atualize as permissões nas configurações do navegador.';
-                        this.statusText.textContent = 'Permissão negada';
-                        this.statusIndicator.style.backgroundColor = '#FF9800';
-                    }
-                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                    this.startBtn.disabled = true;
-                    this.talkButton.disabled = true;
+                    this.handleMicrophoneError(error);
                 }
+            }
+            
+            handleMicrophoneError(error) {
+                let errorMessage = 'Erro ao acessar microfone.';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Permissão de microfone negada. Atualize as permissões nas configurações do navegador.';
+                    this.statusText.textContent = 'Permissão negada';
+                    this.statusIndicator.style.backgroundColor = '#FF9800';
+                }
+                this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                this.startBtn.disabled = true;
+                this.talkButton.disabled = true;
             }
             
             monitorAudio() {
@@ -469,10 +545,66 @@
                 requestAnimationFrame(() => this.monitorAudio());
             }
             
-            setupSpeechRecognition() {
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startListening());
+                this.stopBtn.addEventListener('click', () => this.stopListening());
+                
+                this.talkButton.addEventListener('mousedown', () => this.startRecording());
+                this.talkButton.addEventListener('mouseup', () => this.stopRecording());
+                this.talkButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startRecording();
+                });
+                this.talkButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.stopRecording();
+                });
+                
+                // Method selector
+                this.webSpeechBtn.addEventListener('click', () => this.switchMethod('webspeech'));
+                this.annyangBtn.addEventListener('click', () => this.switchMethod('annyang'));
+                this.recordBtn.addEventListener('click', () => this.switchMethod('recording'));
+            }
+            
+            switchMethod(method) {
+                this.stopListening();
+                this.currentMethod = method;
+                
+                // Update UI
+                document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+                if (method === 'webspeech') this.webSpeechBtn.classList.add('active');
+                else if (method === 'annyang') this.annyangBtn.classList.add('active');
+                else if (method === 'recording') this.recordBtn.classList.add('active');
+                
+                this.setupCurrentMethod();
+                this.addMessage(`Bloquito: Método alterado para ${this.getMethodName(method)}`, 'bot');
+            }
+            
+            getMethodName(method) {
+                switch(method) {
+                    case 'webspeech': return 'Web Speech API';
+                    case 'annyang': return 'Annyang.js';
+                    case 'recording': return 'Gravação Manual';
+                    default: return 'Desconhecido';
+                }
+            }
+            
+            setupCurrentMethod() {
+                switch(this.currentMethod) {
+                    case 'webspeech':
+                        this.setupWebSpeechRecognition();
+                        break;
+                    case 'annyang':
+                        this.setupAnnyangRecognition();
+                        break;
+                    case 'recording':
+                        // Método de gravação não precisa de setup especial
+                        break;
+                }
+            }
+            
+            setupWebSpeechRecognition() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.', 'bot');
-                    this.startBtn.disabled = true;
                     return;
                 }
                 
@@ -484,74 +616,129 @@
                 this.recognition.lang = 'pt-BR';
                 
                 this.recognition.onstart = () => this.onStart();
-                this.recognition.onresult = (event) => this.onResult(event);
+                this.recognition.onresult = (event) => this.onWebSpeechResult(event);
                 this.recognition.onerror = (event) => this.onError(event);
                 this.recognition.onend = () => this.onEnd();
             }
             
-            setupEventListeners() {
-                this.startBtn.addEventListener('click', () => this.startListening());
-                this.stopBtn.addEventListener('click', () => this.stopListening());
+            setupAnnyangRecognition() {
+                if (typeof annyang === 'undefined') return;
                 
-                this.talkButton.addEventListener('mousedown', () => this.startListening());
-                this.talkButton.addEventListener('mouseup', () => this.stopListening());
+                // Define comandos para Annyang
+                const commands = {
+                    '*text': (text) => {
+                        this.addMessage(`Você: ${text}`, 'user');
+                        this.processCommand(text.toLowerCase());
+                    }
+                };
                 
-                this.talkButton.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.startListening();
-                });
+                annyang.addCommands(commands);
+                annyang.setLanguage('pt-BR');
                 
-                this.talkButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.stopListening();
-                });
+                // Callbacks do Annyang
+                annyang.addCallback('start', () => this.onStart());
+                annyang.addCallback('end', () => this.onEnd());
+                annyang.addCallback('error', (error) => this.onError(error));
             }
             
             startListening() {
-                if (!this.recognition) return;
+                if (!this.microphoneStream) return;
                 
-                this.playBeep();
                 this.recognitionActiveByUser = true;
                 
-                try {
-                    this.recognition.start();
-                } catch (error) {
-                    console.error('Erro ao iniciar reconhecimento:', error);
-                    this.addMessage('Bloquito: Não foi possível iniciar o reconhecimento. Tente novamente.', 'bot');
-                    this.updateStatus('Erro ao iniciar', 'error');
+                switch(this.currentMethod) {
+                    case 'webspeech':
+                        if (this.recognition) {
+                            try {
+                                this.recognition.start();
+                            } catch (error) {
+                                this.handleRecognitionError(error);
+                            }
+                        }
+                        break;
+                    case 'annyang':
+                        if (typeof annyang !== 'undefined') {
+                            annyang.start();
+                        }
+                        break;
+                    case 'recording':
+                        this.addMessage('Bloquito: Modo gravação ativo. Use "Segurar para Falar" para gravar comandos.', 'bot');
+                        this.updateStatus('Modo gravação ativo', 'listening');
+                        break;
                 }
-            }
-            
-            playBeep() {
-                this.beepSound.play().catch(e => console.log('Beep não pode ser reproduzido:', e));
             }
             
             stopListening() {
-                if (this.recognition) {
-                    this.recognitionActiveByUser = false;
-                    this.recognition.stop();
-                    this.playBeep();
+                this.recognitionActiveByUser = false;
+                
+                switch(this.currentMethod) {
+                    case 'webspeech':
+                        if (this.recognition) {
+                            this.recognition.stop();
+                        }
+                        break;
+                    case 'annyang':
+                        if (typeof annyang !== 'undefined') {
+                            annyang.abort();
+                        }
+                        break;
+                    case 'recording':
+                        this.updateStatus('Não está ouvindo', 'not-listening');
+                        break;
                 }
+            }
+            
+            startRecording() {
+                if (!this.microphoneStream) return;
+                
+                this.audioChunks = [];
+                this.mediaRecorder = new MediaRecorder(this.microphoneStream);
+                
+                this.mediaRecorder.ondataavailable = (event) => {
+                    this.audioChunks.push(event.data);
+                };
+                
+                this.mediaRecorder.onstop = () => {
+                    this.processRecording();
+                };
+                
+                this.mediaRecorder.start();
+                this.isRecording = true;
+                this.talkButton.classList.add('recording');
+                this.updateStatus('Gravando...', 'processing');
+            }
+            
+            stopRecording() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.isRecording = false;
+                    this.talkButton.classList.remove('recording');
+                }
+            }
+            
+            processRecording() {
+                // Simula processamento de áudio gravado
+                const userInput = prompt('O que você disse? (Simulação de reconhecimento)');
+                if (userInput && userInput.trim()) {
+                    this.addMessage(`Você (gravado): ${userInput}`, 'user');
+                    this.processCommand(userInput.toLowerCase());
+                }
+                this.updateStatus('Não está ouvindo', 'not-listening');
             }
             
             onStart() {
                 this.isListening = true;
-                this.updateStatus('Ouvindo...', 'listening');
+                this.updateStatus(`Ouvindo (${this.getMethodName(this.currentMethod)})...`, 'listening');
                 this.startBtn.disabled = true;
                 this.stopBtn.disabled = false;
-                this.talkButton.classList.add('active');
             }
             
-            onResult(event) {
+            onWebSpeechResult(event) {
                 let finalTranscript = '';
-                let interimTranscript = '';
                 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
+                        finalTranscript += event.results[i][0].transcript;
                     }
                 }
                 
@@ -566,24 +753,7 @@
             onError(event) {
                 if (event.error !== 'no-speech') {
                     console.error('Erro no reconhecimento:', event.error);
-                    
-                    let errorMessage = '';
-                    switch (event.error) {
-                        case 'audio-capture':
-                            errorMessage = 'Erro ao capturar áudio. Verifique o microfone.';
-                            break;
-                        case 'not-allowed':
-                            errorMessage = 'Permissão de microfone negada. Atualize as permissões.';
-                            break;
-                        case 'network':
-                            errorMessage = 'Erro de rede. Verifique sua conexão.';
-                            break;
-                        default:
-                            errorMessage = `Erro: ${event.error}`;
-                    }
-                    
-                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                    this.updateStatus('Erro', 'error');
+                    this.updateStatus('Erro no reconhecimento', 'error');
                 }
             }
             
@@ -592,15 +762,25 @@
                 this.updateStatus('Não está ouvindo', 'not-listening');
                 this.startBtn.disabled = false;
                 this.stopBtn.disabled = true;
-                this.talkButton.classList.remove('active');
                 
-                if (this.recognitionActiveByUser) {
+                if (this.recognitionActiveByUser && this.currentMethod !== 'recording') {
                     setTimeout(() => {
                         if (this.recognitionActiveByUser) {
                             this.startListening();
                         }
                     }, 500);
                 }
+            }
+            
+            handleRecognitionError(error) {
+                console.error('Erro ao iniciar reconhecimento:', error);
+                this.addMessage('Bloquito: Não foi possível iniciar o reconhecimento. Tente outro método.', 'bot');
+                this.updateStatus('Erro ao iniciar', 'error');
+            }
+            
+            simulateCommand(command) {
+                this.addMessage(`Você (clique): ${command}`, 'user');
+                this.processCommand(command.toLowerCase());
             }
             
             processCommand(command) {
@@ -613,15 +793,15 @@
                 if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || 
                     normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || 
                     normalizedCommand.includes('boa noite')) {
-                    response = 'Olá! Como posso te ajudar?';
+                    response = 'Olá! Como posso te ajudar hoje?';
                 } 
                 else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || 
                          normalizedCommand.includes('voce esta bem')) {
-                    response = 'Estou bem, obrigado! E você?';
+                    response = 'Estou bem, obrigado! E você, como está?';
                 } 
                 else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || 
                          normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome')) {
-                    response = 'Eu sou o Bloquito, seu assistente de voz especializado em kits educacionais da Asthor Barden!';
+                    response = 'Eu sou o Bloquito, seu assistente de voz especializado em kits educacionais da Asthor Barden! Posso usar diferentes métodos de reconhecimento para melhor compatibilidade.';
                 } 
                 else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
                     response = `Agora são ${timeString}.`;
@@ -630,23 +810,26 @@
                     response = 'Parando o reconhecimento. Até mais!';
                     this.stopListening();
                 }
-                // Perguntas específicas
+                // Perguntas específicas sobre produtos
                 else if (normalizedCommand.includes('o que e bloco mais') || 
                          normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica com componentes em blocos, facilitando conexões físicas. Focado em robótica, automação e eletrônica básica.';
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica com componentes em blocos, facilitando conexões físicas de forma prática e modular. É focado em robótica, automação e eletrônica básica.';
                 } 
                 else if (normalizedCommand.includes('o que e steamaker')) {
-                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade.';
+                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em diferentes tipos de montagem.';
                 } 
                 else if (normalizedCommand.includes('bloco mais bot')) {
-                    response = 'O Bloco+Bot é o microcontrolador central do kit, com ESP32, sensores e capacidade de controlar motores e LEDs.';
+                    response = 'O Bloco+Bot é o microcontrolador central do kit, equipado com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
                 } 
                 else if (normalizedCommand.includes('corellaser')) {
-                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden.';
+                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden para projetos educacionais.';
+                }
+                else if (normalizedCommand.includes('metodo') || normalizedCommand.includes('reconhecimento')) {
+                    response = `Atualmente estou usando o método ${this.getMethodName(this.currentMethod)}. Você pode alternar entre Web Speech API, Annyang.js ou gravação manual para melhor compatibilidade.`;
                 }
                 // Fallback
                 else {
-                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden?';
+                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden. Você também pode tentar outro método de reconhecimento.';
                 }
 
                 if (response) {
@@ -672,13 +855,13 @@
                     utterance.rate = 0.9;
                     
                     // Para o reconhecimento durante a fala
-                    if (this.recognition && this.isListening) {
-                        this.recognition.stop();
+                    if (this.isListening) {
+                        this.stopListening();
                     }
                     
                     utterance.onend = () => {
                         // Reinicia o reconhecimento se o usuário ainda estiver ativo
-                        if (this.recognitionActiveByUser) {
+                        if (this.recognitionActiveByUser && this.currentMethod !== 'recording') {
                             setTimeout(() => {
                                 if (this.recognitionActiveByUser) {
                                     this.startListening();
@@ -694,14 +877,17 @@
             updateStatus(message, state) {
                 this.statusText.textContent = message;
                 
+                this.statusIndicator.className = 'status-indicator';
                 if (state === 'listening') {
-                    this.statusIndicator.className = 'status-indicator listening';
+                    this.statusIndicator.classList.add('listening');
+                } else if (state === 'processing') {
+                    this.statusIndicator.classList.add('processing');
                 } else if (state === 'error') {
                     this.statusIndicator.style.backgroundColor = '#FF9800';
                     this.statusIndicator.style.animation = 'none';
                 } else {
-                    this.statusIndicator.className = 'status-indicator';
                     this.statusIndicator.style.backgroundColor = '#f44336';
+                    this.statusIndicator.style.animation = 'none';
                 }
             }
             
@@ -721,13 +907,16 @@
             }
         }
         
+        // Variável global para permitir acesso aos comandos clicáveis
+        let assistant;
+        
         // Inicializa o assistente quando a página carrega
         document.addEventListener('DOMContentLoaded', () => {
-            const assistant = new VoiceAssistant();
+            assistant = new UniversalVoiceAssistant();
             
             // Adiciona mensagem de boas-vindas após um breve delay
             setTimeout(() => {
-                assistant.addMessage('Bloquito: Estou pronto para ajudar! Faça uma pergunta sobre nossos produtos.', 'bot');
+                assistant.addMessage('Bloquito: Sistema iniciado! Escolha um método de reconhecimento e comece a conversar.', 'bot');
             }, 1000);
         });
     </script>
