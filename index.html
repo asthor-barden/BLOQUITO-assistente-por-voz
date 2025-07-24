@@ -1,29 +1,1508 @@
-                // Comandos específicos dos produtos
-                else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, com componentes em blocos para facilitar conexões físicas de forma prática e modular. É focado em robótica, automação e eletrônica básica.';
-                } 
-                else if (normalizedCommand.includes('o que e steamaker')) {
-                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em diferentes tipos de montagem.';
-                } 
-                else if (normalizedCommand.includes('bloco mais bot')) {
-                    response = 'O Bloco+Bot é o microcontrolador central do kit, equipado com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
-                } 
-                else if (normalizedCommand.includes('corellaser') || normalizedCommand.includes('fale sobre corellaser')) {
-                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden para projetos educacionais.';
-                }
-                else if (normalizedCommand.includes('asthor barden')) {
-                    response = 'A Asthor Barden é a empresa responsável pelo desenvolvimento dos kits Bloco+ e STEAMAKER, focados em eletrônica pedagógica e tecnologias educacionais.';
-                }
-                else {
-                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden. Tente falar mais claramente ou use o botão de teste.';
-                }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloquito - Assistente Inteligente</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #343541;
+            color: #ececf1;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #202123;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #4d4d4f;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            right: -40px;
+            top: 20px;
+            background: #202123;
+            border: none;
+            color: #ececf1;
+            width: 32px;
+            height: 32px;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .sidebar-toggle:hover {
+            background: #40414f;
+        }
+        
+        .sidebar-header {
+            padding: 18px 12px;
+            border-bottom: 1px solid #4d4d4f;
+        }
+        
+        .new-chat-btn {
+            background: transparent;
+            border: 1px solid #565869;
+            color: #ececf1;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .new-chat-btn:hover {
+            background: #40414f;
+        }
+        
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .chat-item {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-item:hover {
+            background: #40414f;
+        }
+        
+        .chat-item.active {
+            background: #40414f;
+        }
+        
+        .chat-title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .chat-actions {
+            opacity: 0;
+            display: flex;
+            gap: 4px;
+            transition: opacity 0.2s;
+        }
+        
+        .chat-item:hover .chat-actions {
+            opacity: 1;
+        }
+        
+        .chat-action-btn {
+            background: none;
+            border: none;
+            color: #8e8ea0;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .chat-action-btn:hover {
+            background: #565869;
+            color: #ececf1;
+        }
+        
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid #4d4d4f;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .user-profile:hover {
+            background: #40414f;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #10a37f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .user-status {
+            font-size: 12px;
+            color: #8e8ea0;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.sidebar-hidden {
+            margin-left: 0;
+        }
+        
+        /* Chat Mode */
+        .chat-mode {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .chat-header {
+            background: #343541;
+            border-bottom: 1px solid #4d4d4f;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-title-header {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .conversation {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 16px;
+            max-width: 768px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .message {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .user-message-avatar {
+            background: #5436da;
+            color: white;
+        }
+        
+        .bot-message-avatar {
+            background: #10a37f;
+            color: white;
+        }
+        
+        .message-content {
+            flex: 1;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        
+        .bot-message {
+            background: #444654;
+            margin: 0 -16px 24px -16px;
+            padding: 24px 16px;
+        }
+        
+        .confidence-indicator {
+            display: inline-block;
+            background: #10a37f;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        
+        .confidence-indicator.medium {
+            background: #f59e0b;
+        }
+        
+        .confidence-indicator.low {
+            background: #ef4444;
+        }
+        
+        .input-container {
+            padding: 16px;
+            background: #343541;
+            border-top: 1px solid #4d4d4f;
+            max-width: 768px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .input-wrapper {
+            background: #40414f;
+            border-radius: 12px;
+            border: 1px solid #565869;
+            padding: 12px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: #10a37f;
+        }
+        
+        .text-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ececf1;
+            font-size: 16px;
+            line-height: 1.5;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 24px;
+        }
+        
+        .text-input::placeholder {
+            color: #8e8ea0;
+        }
+        
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .mic-btn {
+            background: transparent;
+            border: none;
+            color: #8e8ea0;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .mic-btn:hover {
+            background: #565869;
+            color: #ececf1;
+        }
+        
+        .mic-btn.active {
+            background: #10a37f;
+            color: white;
+        }
+        
+        .send-btn {
+            background: #10a37f;
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            background: #1a7f64;
+        }
+        
+        .send-btn:disabled {
+            background: #565869;
+            cursor: not-allowed;
+        }
+        
+        /* Voice Mode */
+        .voice-mode {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            z-index: 1000;
+            flex-direction: column;
+        }
+        
+        .voice-mode.active {
+            display: flex;
+        }
+        
+        .voice-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .voice-back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .voice-back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .voice-settings {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .voice-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .voice-control-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .voice-select,
+        .voice-speed {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .voice-select option,
+        .voice-speed option {
+            background: #40414f;
+            color: #ececf1;
+        }
+        
+        .voice-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+        
+        .voice-animation {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 40px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .voice-animation::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .voice-animation.listening {
+            background: rgba(16, 163, 127, 0.2);
+            border-color: rgba(16, 163, 127, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .voice-animation.listening::before {
+            border-color: rgba(16, 163, 127, 0.3);
+            animation: ripple 2s infinite;
+        }
+        
+        .voice-animation.speaking {
+            background: rgba(84, 54, 218, 0.2);
+            border-color: rgba(84, 54, 218, 0.5);
+            animation: wave 1.5s infinite;
+        }
+        
+        .voice-animation.speaking::before {
+            border-color: rgba(84, 54, 218, 0.3);
+            animation: ripple 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.02) rotate(1deg); }
+            75% { transform: scale(0.98) rotate(-1deg); }
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        
+        .voice-icon {
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .voice-status {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .voice-subtitle {
+            font-size: 16px;
+            opacity: 0.7;
+            margin-bottom: 40px;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        
+        .voice-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .voice-control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .voice-control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .voice-control-btn.active {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+        
+        .voice-control-btn.muted {
+            background: #f59e0b;
+            border-color: #f59e0b;
+        }
+        
+        /* Welcome Modal */
+        .welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .welcome-content {
+            background: #40414f;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid #565869;
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #ececf1;
+        }
+        
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #8e8ea0;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        
+        .name-input {
+            background: #565869;
+            border: 1px solid #6b7280;
+            color: #ececf1;
+            padding: 14px 16px;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 16px;
+            margin-bottom: 24px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .name-input:focus {
+            border-color: #10a37f;
+        }
+        
+        .welcome-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .welcome-btn {
+            background: #10a37f;
+            border: none;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            flex: 1;
+            transition: background 0.2s;
+        }
+        
+        .welcome-btn:hover {
+            background: #1a7f64;
+        }
+        
+        .welcome-btn.secondary {
+            background: transparent;
+            border: 1px solid #565869;
+            color: #ececf1;
+        }
+        
+        .welcome-btn.secondary:hover {
+            background: #565869;
+        }
+        
+        /* Scrollbar */
+        .conversation::-webkit-scrollbar,
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .conversation::-webkit-scrollbar-track,
+        .chat-history::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .conversation::-webkit-scrollbar-thumb,
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #565869;
+            border-radius: 3px;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 100;
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+            
+            .voice-animation {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .voice-icon {
+                font-size: 36px;
+            }
+            
+            .voice-status {
+                font-size: 24px;
+            }
+            
+            .voice-subtitle {
+                font-size: 14px;
+            }
+            
+            .voice-settings {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .voice-controls {
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-content">
+            <h2 class="welcome-title">Bem-vindo ao Bloquito</h2>
+            <p class="welcome-subtitle">Para uma experiência mais personalizada, você pode nos dizer seu nome. Isso é opcional e você pode pular esta etapa.</p>
+            <input type="text" class="name-input" id="nameInput" placeholder="Digite seu nome (opcional)" maxlength="50">
+            <div class="welcome-actions">
+                <button class="welcome-btn secondary" onclick="skipNameSetup()">Pular</button>
+                <button class="welcome-btn" onclick="setUserName()">Continuar</button>
+            </div>
+        </div>
+    </div>
 
-                if (response) {
-                    setTimeout(() => {
-                        this.addMessage(`Bloquito: ${response}`, 'bot');
-                        this.speak(response);
-                    }, 300);
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="createNewChat()">
+                <i class="fas fa-plus"></i>
+                Nova conversa
+            </button>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history items will be inserted here -->
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile" onclick="editUserName()">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Usuário</div>
+                    <div class="user-status">Online</div>
+                </div>
+                <i class="fas fa-edit" style="color: #8e8ea0; font-size: 12px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Chat Mode -->
+        <div class="chat-mode" id="chatMode">
+            <div class="chat-header">
+                <div class="chat-title-header" id="chatTitleHeader">Bloquito</div>
+            </div>
+            
+            <div class="conversation" id="conversation">
+                <!-- Messages will be inserted here -->
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea class="text-input" id="textInput" placeholder="Envie uma mensagem..." rows="1"></textarea>
+                    <div class="input-actions">
+                        <button class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Mode -->
+    <div class="voice-mode" id="voiceMode">
+        <div class="voice-header">
+            <button class="voice-back-btn" onclick="closeVoiceMode()">
+                <i class="fas fa-arrow-left"></i>
+                Voltar ao chat
+            </button>
+            <div class="voice-settings">
+                <div class="voice-control-group">
+                    <div class="voice-control-label">Voz</div>
+                    <select class="voice-select" id="voiceSelect">
+                        <option value="">Carregando vozes...</option>
+                    </select>
+                </div>
+                <div class="voice-control-group">
+                    <div class="voice-control-label">Velocidade</div>
+                    <select class="voice-speed" id="voiceSpeed">
+                        <option value="0.7">Lenta</option>
+                        <option value="0.9" selected>Normal</option>
+                        <option value="1.1">Rápida</option>
+                        <option value="1.3">Muito Rápida</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="voice-content">
+            <div class="voice-animation" id="voiceAnimation">
+                <i class="fas fa-microphone voice-icon"></i>
+            </div>
+            
+            <div class="voice-status" id="voiceStatus">Iniciando...</div>
+            <div class="voice-subtitle" id="voiceSubtitle">Preparando o sistema de reconhecimento de voz</div>
+            
+            <div class="voice-controls">
+                <button class="voice-control-btn" id="muteBtn" onclick="toggleMute()">
+                    <i class="fas fa-microphone"></i>
+                    Silenciar
+                </button>
+                <button class="voice-control-btn" id="stopVoiceBtn" onclick="closeVoiceMode()">
+                    <i class="fas fa-times"></i>
+                    Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de conhecimento externa (JSON)
+        const knowledgeBase = {
+            "greetings": {
+                "keywords": ["oi", "ola", "bom dia", "boa tarde", "boa noite", "hey", "e ai"],
+                "response": "Olá{userName}! Como posso ajudá-lo hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Barden."
+            },
+            "wellbeing": {
+                "keywords": ["tudo bem", "como vai", "voce esta bem", "como voce esta", "como esta"],
+                "response": "Estou muito bem, obrigado{userName}! Funcionando perfeitamente e pronto para ajudar. E você, como está?"
+            },
+            "identity": {
+                "keywords": ["quem e voce", "como e seu nome", "fale sobre voce", "se apresente", "quem voce e"],
+                "response": "Eu sou o Bloquito{userName}! Sou seu assistente inteligente especializado em produtos da Asthor Barden. Posso ajudar com informações sobre Bloco+, STEAMAKER, CorelLASER e muito mais."
+            },
+            "time": {
+                "keywords": ["que horas", "horas sao", "horario"],
+                "response": "Agora são {time}{userName}."
+            },
+            "stop": {
+                "keywords": ["parar", "pare", "finalizar", "sair", "tchau", "ate logo", "ate mais", "adeus"],
+                "response": "Entendido{userName}! {stopAction}",
+                "action": "stop_voice"
+            },
+            "bloco_plus": {
+                "keywords": ["o que e bloco mais", "fale sobre o bloco mais", "bloco+", "bloco mais", "kit bloco"],
+                "response": "O Bloco+ é um kit de eletrônica pedagógica inovador da Asthor Barden{userName}. Os componentes estão organizados em blocos modulares que facilitam as conexões físicas, sendo perfeito para ensinar robótica, automação e eletrônica básica de forma prática e divertida."
+            },
+            "steamaker": {
+                "keywords": ["o que e steamaker", "fale sobre steamaker", "steamaker", "steam maker"],
+                "response": "O STEAMAKER é outro kit fantástico da Asthor Barden{userName}. Similar ao Bloco+, mas com componentes organizados em módulos que oferecem ainda maior flexibilidade para diferentes tipos de montagem. É ideal para projetos STEAM mais avançados."
+            },
+            "bloco_bot": {
+                "keywords": ["bloco mais bot", "blocobot", "bloco+ bot", "esp32", "microcontrolador"],
+                "response": "O Bloco+Bot é o cérebro do sistema{userName}! É um microcontrolador baseado em ESP32 com sensores integrados como acelerômetro, giroscópio e temperatura, além de ter capacidade para controlar motores DC, LEDs e buzzer. É realmente o coração de todos os projetos."
+            },
+            "corellaser": {
+                "keywords": ["corellaser", "fale sobre corellaser", "corel laser", "software laser", "corte laser"],
+                "response": "O CorelLASER é um software especializado para controle de máquinas de corte a laser{userName}. É usado em conjunto com os kits da Asthor Barden para criar peças personalizadas e projetos educacionais incríveis. Perfeito para makers e educadores."
+            },
+            "asthor_barden": {
+                "keywords": ["asthor barden", "empresa", "fabricante", "quem faz"],
+                "response": "A Asthor Barden é a empresa inovadora por trás de todos esses produtos{userName}! Eles são especialistas em eletrônica pedagógica e tecnologias educacionais, sempre focando em tornar o aprendizado mais prático e envolvente."
+            },
+            "help": {
+                "keywords": ["ajuda", "help", "comandos", "o que voce faz", "como usar"],
+                "response": "Posso ajudá-lo com informações sobre:\n\nBloco+ e seus componentes\nSTEAMAKER\nBloco+Bot (ESP32)\nCorelLASER\nAsthor Barden\n\nTambém posso conversar sobre outros assuntos{userName}! Use o microfone para falar comigo ou digite suas perguntas."
+            },
+            "thanks": {
+                "keywords": ["obrigado", "obrigada", "valeu", "muito obrigado", "agradeco"],
+                "response": "Por nada{userName}! Fico feliz em ajudar. Se tiver mais alguma dúvida, estarei aqui."
+            },
+            "default": {
+                "response": "Não tenho informações específicas sobre isso{userName}. Posso ajudá-lo com questões sobre Bloco+, STEAMAKER, CorelLASER ou outros produtos da Asthor Barden. Que tal reformular sua pergunta ou me contar mais sobre o que gostaria de saber?"
+            }
+        };
+
+        class BloquitoAssistant {
+            constructor() {
+                this.currentChatId = null;
+                this.chats = this.loadChats();
+                this.userName = this.loadUserName();
+                this.isVoiceMode = false;
+                this.isListening = false;
+                this.isMuted = false;
+                this.recognition = null;
+                this.selectedVoice = null;
+                this.voiceSpeedValue = 0.9;
+                this.availableVoices = [];
+                this.sidebarVisible = true;
+                
+                this.initializeElements();
+                this.setupVoiceRecognition();
+                this.setupEventListeners();
+                this.loadVoices();
+                
+                if (this.userName === null) {
+                    this.showWelcomeModal();
+                } else {
+                    this.hideWelcomeModal();
+                    this.updateUserDisplay();
+                    this.createNewChat();
                 }
+            }
+            
+            initializeElements() {
+                this.welcomeModal = document.getElementById('welcomeModal');
+                this.nameInput = document.getElementById('nameInput');
+                this.sidebar = document.getElementById('sidebar');
+                this.mainContent = document.getElementById('mainContent');
+                this.chatHistory = document.getElementById('chatHistory');
+                this.userNameEl = document.getElementById('userName');
+                this.userAvatar = document.getElementById('userAvatar');
+                this.chatMode = document.getElementById('chatMode');
+                this.voiceMode = document.getElementById('voiceMode');
+                this.conversation = document.getElementById('conversation');
+                this.textInput = document.getElementById('textInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.micBtn = document.getElementById('micBtn');
+                this.voiceSelect = document.getElementById('voiceSelect');
+                this.voiceSpeedEl = document.getElementById('voiceSpeed');
+                this.voiceAnimation = document.getElementById('voiceAnimation');
+                this.voiceStatus = document.getElementById('voiceStatus');
+                this.voiceSubtitle = document.getElementById('voiceSubtitle');
+                this.muteBtn = document.getElementById('muteBtn');
+                this.chatTitleHeader = document.getElementById('chatTitleHeader');
+            }
+            
+            showWelcomeModal() {
+                this.welcomeModal.style.display = 'flex';
+                this.nameInput.focus();
+            }
+            
+            hideWelcomeModal() {
+                this.welcomeModal.style.display = 'none';
+            }
+            
+            setUserName() {
+                const name = this.nameInput.value.trim();
+                this.userName = name || 'Usuário';
+                this.saveUserName(this.userName);
+                this.updateUserDisplay();
+                this.hideWelcomeModal();
+                this.createNewChat();
+            }
+            
+            skipNameSetup() {
+                this.userName = 'Usuário';
+                this.saveUserName(this.userName);
+                this.updateUserDisplay();
+                this.hideWelcomeModal();
+                this.createNewChat();
+            }
+            
+            editUserName() {
+                const newName = prompt('Como gostaria de ser chamado?', this.userName);
+                if (newName !== null) {
+                    this.userName = newName.trim() || 'Usuário';
+                    this.saveUserName(this.userName);
+                    this.updateUserDisplay();
+                }
+            }
+            
+            updateUserDisplay() {
+                this.userNameEl.textContent = this.userName;
+                this.userAvatar.textContent = this.userName.charAt(0).toUpperCase();
+            }
+            
+            loadUserName() {
+                const saved = localStorage.getItem('bloquito_user_name');
+                return saved === null ? null : saved;
+            }
+            
+            saveUserName(name) {
+                localStorage.setItem('bloquito_user_name', name);
+            }
+            
+            loadChats() {
+                const saved = localStorage.getItem('bloquito_chats');
+                return saved ? JSON.parse(saved) : {};
+            }
+            
+            saveChats() {
+                localStorage.setItem('bloquito_chats', JSON.stringify(this.chats));
+            }
+            
+            createNewChat() {
+                const chatId = 'chat_' + Date.now();
+                const chatTitle = 'Nova conversa';
+                
+                this.chats[chatId] = {
+                    id: chatId,
+                    title: chatTitle,
+                    messages: [],
+                    createdAt: new Date().toISOString()
+                };
+                
+                this.currentChatId = chatId;
+                this.saveChats();
+                this.renderChatHistory();
+                this.renderConversation();
+                this.chatTitleHeader.textContent = chatTitle;
+                
+                // Adiciona mensagem de boas-vindas
+                const welcomeMessage = this.userName === 'Usuário' 
+                    ? 'Olá! Eu sou o Bloquito, seu assistente inteligente especializado em produtos da Asthor Barden. Como posso ajudá-lo hoje?'
+                    : `Olá, ${this.userName}! Eu sou o Bloquito, seu assistente inteligente especializado em produtos da Asthor Barden. Como posso ajudá-lo hoje?`;
+                
+                this.addMessage(welcomeMessage, 'bot');
+            }
+            
+            loadChat(chatId) {
+                this.currentChatId = chatId;
+                this.renderConversation();
+                this.chatTitleHeader.textContent = this.chats[chatId].title;
+                
+                // Marca como ativo
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+                if (chatItem) {
+                    chatItem.classList.add('active');
+                }
+            }
+            
+            deleteChat(chatId) {
+                if (confirm('Tem certeza que deseja excluir esta conversa?')) {
+                    delete this.chats[chatId];
+                    this.saveChats();
+                    this.renderChatHistory();
+                    
+                    if (this.currentChatId === chatId) {
+                        this.createNewChat();
+                    }
+                }
+            }
+            
+            renderChatHistory() {
+                this.chatHistory.innerHTML = '';
+                
+                const sortedChats = Object.values(this.chats).sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                );
+                
+                sortedChats.forEach(chat => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'chat-item';
+                    chatItem.dataset.chatId = chat.id;
+                    if (chat.id === this.currentChatId) {
+                        chatItem.classList.add('active');
+                    }
+                    
+                    chatItem.innerHTML = `
+                        <div class="chat-title">${chat.title}</div>
+                        <div class="chat-actions">
+                            <button class="chat-action-btn" onclick="assistant.deleteChat('${chat.id}')" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    chatItem.addEventListener('click', (e) => {
+                        if (!e.target.closest('.chat-action-btn')) {
+                            this.loadChat(chat.id);
+                        }
+                    });
+                    
+                    this.chatHistory.appendChild(chatItem);
+                });
+            }
+            
+            renderConversation() {
+                this.conversation.innerHTML = '';
+                
+                if (this.currentChatId && this.chats[this.currentChatId]) {
+                    this.chats[this.currentChatId].messages.forEach(message => {
+                        this.renderMessage(message.content, message.type, message.confidence);
+                    });
+                }
+            }
+            
+            renderMessage(content, type, confidence = null) {
+                const messageEl = document.createElement('div');
+                messageEl.className = 'message';
+                
+                const avatar = document.createElement('div');
+                avatar.className = `message-avatar ${type}-message-avatar`;
+                avatar.textContent = type === 'user' ? this.userName.charAt(0).toUpperCase() : 'B';
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.innerHTML = content.replace(/\n/g, '<br>');
+                
+                if (confidence !== null && type === 'user') {
+                    const confidencePercent = Math.round(confidence * 100);
+                    const confidenceBadge = document.createElement('span');
+                    confidenceBadge.className = 'confidence-indicator';
+                    if (confidencePercent < 70) confidenceBadge.classList.add('medium');
+                    if (confidencePercent < 50) confidenceBadge.classList.add('low');
+                    confidenceBadge.textContent = `${confidencePercent}%`;
+                    messageContent.appendChild(confidenceBadge);
+                }
+                
+                messageEl.appendChild(avatar);
+                messageEl.appendChild(messageContent);
+                
+                if (type === 'bot') {
+                    messageEl.classList.add('bot-message');
+                }
+                
+                this.conversation.appendChild(messageEl);
+                this.conversation.scrollTop = this.conversation.scrollHeight;
+            }
+            
+            addMessage(content, type, confidence = null) {
+                if (!this.currentChatId) return;
+                
+                const message = {
+                    content,
+                    type,
+                    confidence,
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.chats[this.currentChatId].messages.push(message);
+                
+                // Atualiza título do chat se for a primeira mensagem do usuário
+                if (type === 'user' && this.chats[this.currentChatId].messages.length === 2) {
+                    const title = content.length > 30 ? content.substring(0, 30) + '...' : content;
+                    this.chats[this.currentChatId].title = title;
+                    this.chatTitleHeader.textContent = title;
+                    this.renderChatHistory();
+                }
+                
+                this.saveChats();
+                this.renderMessage(content, type, confidence);
+            }
+            
+            setupEventListeners() {
+                this.textInput.addEventListener('input', () => {
+                    this.autoResize();
+                    this.sendBtn.disabled = this.textInput.value.trim().length === 0;
+                });
+                
+                this.textInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                this.nameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.setUserName();
+                    }
+                });
+                
+                this.voiceSpeedEl.addEventListener('change', (e) => {
+                    this.voiceSpeedValue = parseFloat(e.target.value);
+                });
+            }
+            
+            autoResize() {
+                this.textInput.style.height = 'auto';
+                this.textInput.style.height = Math.min(this.textInput.scrollHeight, 120) + 'px';
+            }
+            
+            sendMessage() {
+                const message = this.textInput.value.trim();
+                if (!message) return;
+                
+                this.addMessage(message, 'user');
+                this.processCommand(message.toLowerCase());
+                this.textInput.value = '';
+                this.autoResize();
+                this.sendBtn.disabled = true;
+                this.textInput.focus();
+            }
+            
+            toggleSidebar() {
+                this.sidebarVisible = !this.sidebarVisible;
+                if (this.sidebarVisible) {
+                    this.sidebar.classList.remove('hidden');
+                } else {
+                    this.sidebar.classList.add('hidden');
+                }
+            }
+            
+            toggleVoiceMode() {
+                this.isVoiceMode = true;
+                this.voiceMode.classList.add('active');
+                this.startVoiceMode();
+            }
+            
+            startVoiceMode() {
+                this.voiceStatus.textContent = 'Iniciando...';
+                this.voiceSubtitle.textContent = 'Preparando o sistema de reconhecimento de voz';
+                
+                setTimeout(() => {
+                    this.voiceStatus.textContent = 'Ouvindo';
+                    this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
+                    this.voiceAnimation.classList.add('listening');
+                    this.startListening();
+                }, 1500);
+            }
+            
+            closeVoiceMode() {
+                this.isVoiceMode = false;
+                this.stopListening();
+                speechSynthesis.cancel();
+                this.voiceMode.classList.remove('active');
+                this.voiceAnimation.classList.remove('listening', 'speaking');
+                this.isMuted = false;
+                this.muteBtn.innerHTML = '<i class="fas fa-microphone"></i> Silenciar';
+                this.muteBtn.classList.remove('muted');
+            }
+            
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                
+                if (this.isMuted) {
+                    this.muteBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Ativar';
+                    this.muteBtn.classList.add('muted');
+                    this.voiceStatus.textContent = 'Microfone desativado';
+                    this.voiceSubtitle.textContent = 'Clique em "Ativar" para continuar ouvindo';
+                    this.stopListening();
+                    this.voiceAnimation.classList.remove('listening');
+                } else {
+                    this.muteBtn.innerHTML = '<i class="fas fa-microphone"></i> Silenciar';
+                    this.muteBtn.classList.remove('muted');
+                    this.voiceStatus.textContent = 'Ouvindo';
+                                        this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
+                    this.voiceAnimation.classList.add('listening');
+                    this.startListening();
+                }
+            }
+            
+            setupVoiceRecognition() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    console.log('Reconhecimento de voz não disponível');
+                    return;
+                }
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                
+                this.recognition.continuous = true;
+                this.recognition.interimResults = true;
+                this.recognition.lang = 'pt-BR';
+                this.recognition.maxAlternatives = 1;
+                
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                };
+                
+                this.recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    let confidence = 0;
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        const transcript = result[0].transcript;
+                        confidence = result[0].confidence || 0;
+                        
+                        if (result.isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    if (this.isVoiceMode) {
+                        if (interimTranscript) {
+                            this.voiceSubtitle.textContent = `"${interimTranscript}"`;
+                        }
+                        
+                        if (finalTranscript) {
+                            const cleanTranscript = finalTranscript.trim();
+                            if (cleanTranscript.length > 0) {
+                                this.addMessage(cleanTranscript, 'user', confidence);
+                                this.processCommand(cleanTranscript.toLowerCase());
+                            }
+                        }
+                    }
+                };
+                
+                this.recognition.onerror = (event) => {
+                    console.error('Erro no reconhecimento:', event.error);
+                    if (this.isVoiceMode && event.error !== 'no-speech') {
+                        this.voiceStatus.textContent = 'Erro no reconhecimento';
+                        this.voiceSubtitle.textContent = 'Tente falar novamente ou verifique o microfone';
+                    }
+                };
+                
+                this.recognition.onend = () => {
+                    this.isListening = false;
+                    if (this.isVoiceMode && !this.isMuted) {
+                        setTimeout(() => {
+                            if (this.isVoiceMode && !this.isMuted) {
+                                this.startListening();
+                            }
+                        }, 1000);
+                    }
+                };
+            }
+            
+            startListening() {
+                if (!this.recognition || this.isListening || this.isMuted) return;
+                
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    console.error('Erro ao iniciar reconhecimento:', error);
+                }
+            }
+            
+            stopListening() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
+                }
+            }
+            
+            loadVoices() {
+                const updateVoices = () => {
+                    this.availableVoices = speechSynthesis.getVoices().filter(voice => 
+                        voice.lang.startsWith('pt') || voice.lang.startsWith('en')
+                    );
+                    
+                    this.voiceSelect.innerHTML = '<option value="">Voz padrão do sistema</option>';
+                    
+                    this.availableVoices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        this.voiceSelect.appendChild(option);
+                    });
+                    
+                    // Seleciona uma voz em português por padrão
+                    const ptVoice = this.availableVoices.find(voice => voice.lang.startsWith('pt'));
+                    if (ptVoice) {
+                        const ptIndex = this.availableVoices.indexOf(ptVoice);
+                        this.voiceSelect.value = ptIndex;
+                        this.selectedVoice = ptVoice;
+                    }
+                };
+                
+                updateVoices();
+                speechSynthesis.onvoiceschanged = updateVoices;
+                
+                this.voiceSelect.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        this.selectedVoice = this.availableVoices[e.target.value];
+                    } else {
+                        this.selectedVoice = null;
+                    }
+                });
+            }
+            
+            speak(text) {
+                // Só fala se estiver no modo voz
+                if (!this.isVoiceMode || !('speechSynthesis' in window)) return;
+                
+                // Remove formatação para a fala
+                const cleanText = text.replace(/[^\w\s\.,!?]/gi, '').replace(/\n/g, ' ');
+                
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'pt-BR';
+                utterance.rate = this.voiceSpeedValue || 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 0.8;
+                
+                if (this.selectedVoice) {
+                    utterance.voice = this.selectedVoice;
+                }
+                
+                utterance.onstart = () => {
+                    if (this.isVoiceMode) {
+                        this.voiceAnimation.classList.remove('listening');
+                        this.voiceAnimation.classList.add('speaking');
+                        this.voiceStatus.textContent = 'Respondendo';
+                        this.voiceSubtitle.textContent = 'Aguarde enquanto processo sua resposta';
+                    }
+                    this.stopListening();
+                };
+                
+                utterance.onend = () => {
+                    if (this.isVoiceMode && !this.isMuted) {
+                        this.voiceAnimation.classList.remove('speaking');
+                        this.voiceAnimation.classList.add('listening');
+                        this.voiceStatus.textContent = 'Ouvindo';
+                        this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
+                        setTimeout(() => {
+                            if (this.isVoiceMode && !this.isMuted) {
+                                this.startListening();
+                            }
+                        }, 500);
+                    }
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Erro na síntese de fala:', event.error);
+                };
+                
+                speechSynthesis.speak(utterance);
+            }
+            
+            // Função para buscar resposta na base de conhecimento
+            findResponse(command) {
+                const normalizedCommand = this.normalizeText(command);
+                
+                // Procura por correspondências nas palavras-chave
+                for (const [key, data] of Object.entries(knowledgeBase)) {
+                    if (key === 'default') continue;
+                    
+                    const keywords = data.keywords;
+                    for (const keyword of keywords) {
+                        if (normalizedCommand.includes(this.normalizeText(keyword))) {
+                            return data;
+                        }
+                    }
+                }
+                
+                // Retorna resposta padrão se não encontrar correspondência
+                return knowledgeBase.default;
+            }
+            
+            processCommand(command) {
+                // Simula delay de processamento
+                setTimeout(() => {
+                    const now = new Date();
+                    const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+                    
+                    // Busca resposta na base de conhecimento
+                    const responseData = this.findResponse(command);
+                    let response = responseData.response;
+                    
+                    // Substitui placeholders
+                    const userName = this.userName === 'Usuário' ? '' : `, ${this.userName}`;
+                    response = response.replace('{userName}', userName);
+                    response = response.replace('{time}', timeString);
+                    
+                    // Ações especiais
+                    if (responseData.action === 'stop_voice') {
+                        const stopAction = this.isVoiceMode 
+                            ? 'Finalizando a conversa por voz. Você pode continuar conversando comigo por texto.'
+                            : 'Você pode continuar conversando comigo por texto.';
+                        response = response.replace('{stopAction}', stopAction);
+                        
+                        if (this.isVoiceMode) {
+                            setTimeout(() => this.closeVoiceMode(), 3000);
+                        }
+                    }
+                    
+                    // Adiciona mensagem e fala (se no modo voz)
+                    this.addMessage(response, 'bot');
+                    this.speak(response);
+                    
+                }, 800);
             }
             
             normalizeText(text) {
@@ -33,127 +1512,50 @@
                     .replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^\w\s]/gi, '');
             }
-            
-            speak(text) {
-                if ('speechSynthesis' in window) {
-                    // Para o reconhecimento durante a fala
-                    const wasListening = this.isListening;
-                    const wasContinuous = this.continuousMode;
-                    
-                    if (wasListening) {
-                        this.stopRecognition();
-                    }
-                    
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'pt-BR';
-                    utterance.rate = 0.9;
-                    utterance.pitch = 1;
-                    utterance.volume = 0.8;
-                    
-                    utterance.onstart = () => {
-                        this.log('🔊 Iniciando síntese de fala');
-                        this.updateStatus('🔊 Falando...', 'processing');
-                    };
-                    
-                    utterance.onend = () => {
-                        this.log('�� Síntese de fala finalizada');
-                        this.updateStatus('✅ Pronto', 'ready');
-                        
-                        // Reinicia o reconhecimento se estava ativo
-                        if (wasContinuous && this.continuousMode) {
-                            setTimeout(() => {
-                                this.startRecognition();
-                            }, 500);
-                        }
-                    };
-                    
-                    utterance.onerror = (event) => {
-                        this.log(`❌ Erro na síntese: ${event.error}`);
-                    };
-                    
-                    speechSynthesis.speak(utterance);
-                } else {
-                    this.log('❌ Síntese de fala não suportada');
-                }
-            }
-            
-            updateStatus(message, state) {
-                this.statusText.textContent = message;
-                
-                this.statusIndicator.className = 'status-indicator';
-                this.statusIndicator.style.backgroundColor = '';
-                this.statusIndicator.style.animation = '';
-                
-                switch(state) {
-                    case 'listening':
-                        this.statusIndicator.classList.add('listening');
-                        break;
-                    case 'processing':
-                        this.statusIndicator.classList.add('processing');
-                        break;
-                    case 'error':
-                        this.statusIndicator.style.backgroundColor = '#f44336';
-                        break;
-                    case 'ready':
-                        this.statusIndicator.style.backgroundColor = '#4CAF50';
-                        break;
-                    default:
-                        this.statusIndicator.style.backgroundColor = '#666';
-                }
-            }
-            
-            addMessage(message, type, confidence = null) {
-                const now = new Date();
-                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-                
-                const messageEl = document.createElement('div');
-                messageEl.className = `message ${type}-message`;
-                
-                let confidenceDisplay = '';
-                if (confidence !== null && type === 'user') {
-                    const confidencePercent = Math.round(confidence * 100);
-                    let confidenceColor = '#4CAF50';
-                    if (confidencePercent < 70) confidenceColor = '#FF9800';
-                    if (confidencePercent < 50) confidenceColor = '#f44336';
-                    
-                    confidenceDisplay = `<span style="color: ${confidenceColor}; font-size: 10px; opacity: 0.8;"> (${confidencePercent}%)</span>`;
-                }
-                
-                messageEl.innerHTML = `
-                    ${message}${confidenceDisplay}
-                    <div class="message-time">${timeString}</div>
-                `;
-                
-                this.conversationEl.appendChild(messageEl);
-                this.conversationEl.scrollTop = this.conversationEl.scrollHeight;
-                
-                // Limita mensagens a 20 para performance
-                const messages = this.conversationEl.children;
-                if (messages.length > 20) {
-                    this.conversationEl.removeChild(messages[0]);
-                }
-            }
-            
-            showError(message) {
-                this.engineInfo.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
-                this.engineInfo.style.background = 'rgba(244, 67, 54, 0.2)';
-                this.engineInfo.style.borderColor = 'rgba(244, 67, 54, 0.3)';
-                this.updateStatus('❌ Erro', 'error');
-                this.startBtn.disabled = true;
-                this.talkButton.disabled = true;
-            }
         }
         
-        // Variável global para permitir acesso aos comandos de teste
+        // Funções globais
         let assistant;
         
-        // Inicializa o sistema quando a página carrega
+        function setUserName() {
+            assistant.setUserName();
+        }
+        
+        function skipNameSetup() {
+            assistant.skipNameSetup();
+        }
+        
+        function editUserName() {
+            assistant.editUserName();
+        }
+        
+        function createNewChat() {
+            assistant.createNewChat();
+        }
+        
+        function toggleVoiceMode() {
+            assistant.toggleVoiceMode();
+        }
+        
+        function closeVoiceMode() {
+            assistant.closeVoiceMode();
+        }
+        
+        function toggleMute() {
+            assistant.toggleMute();
+        }
+        
+        function sendMessage() {
+            assistant.sendMessage();
+        }
+        
+        function toggleSidebar() {
+            assistant.toggleSidebar();
+        }
+        
+        // Inicializa quando a página carrega
         document.addEventListener('DOMContentLoaded', () => {
-            assistant = new OptimizedVoiceRecognition();
-            
-            setTimeout(() => {
-                assistant.addMessage('Bloquito: Sistema otimizado iniciado! Use "Pressionar e Falar" para melhor precisão ou teste os comandos clicando neles.', 'bot');
-            }, 2000);
+            assistant = new BloquitoAssistant();
         });
     </script>
 </body>
