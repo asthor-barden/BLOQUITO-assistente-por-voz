@@ -113,6 +113,15 @@
             transform: none;
             box-shadow: none;
         }
+
+        #talkButton {
+            background: #FF5722; /* Laranja/Vermelho para o botão de falar */
+            color: #fff;
+        }
+
+        #talkButton:hover {
+            background: #E64A19;
+        }
         
         .conversation {
             background: rgba(0, 0, 0, 0.2);
@@ -246,15 +255,17 @@
         </div>
         
         <div class="controls">
-            <button id="startBtn">Iniciar Reconhecimento</button>
-            <button id="stopBtn" disabled>Parar</button>
+            <button id="startBtn">Iniciar Reconhecimento Contínuo</button>
+            <button id="stopBtn" disabled>Parar Reconhecimento</button>
+            <button id="talkButton">Segurar para Falar</button>
         </div>
 
         <div class="commands">
             <h3>Importante para uso em Celular:</h3>
             <p>1. Ao carregar a página, o navegador pode pedir permissão para usar o microfone (para a barra de volume). **Por favor, conceda.**</p>
-            <p>2. Para que o Bloquito comece a **escutar seus comandos**, você **precisa tocar no botão "Iniciar Reconhecimento"**. Esta é uma medida de segurança do navegador para o serviço de reconhecimento de voz e não pode ser contornada por código.</p>
-            <p>3. Se o Bloquito não responder, **verifique se você concedeu a permissão de microfone** para este site nas configurações do seu navegador.</p>
+            <p>2. O botão **"Iniciar Reconhecimento Contínuo"** usa a API de Reconhecimento de Voz do navegador. Em celulares, esta API exige um **toque inicial** e pode ser interrompida em segundo plano pelo navegador.</p>
+            <p>3. O botão **"Segurar para Falar"** usa uma abordagem diferente (MediaRecorder + simulação de STT) que tende a ser mais robusta em celulares para comandos únicos.</p>
+            <p>4. Se o Bloquito não responder, **verifique se você concedeu a permissão de microfone** para este site nas configurações do seu navegador.</p>
         </div>
         
         <div class="commands">
@@ -278,7 +289,7 @@
         
         <div class="conversation" id="conversation">
             <div class="message bot-message">
-                Olá! Eu sou o Bloquito. Por favor, permita o acesso ao microfone. Para começarmos a conversar, clique em "Iniciar Reconhecimento".
+                Olá! Eu sou o Bloquito. Por favor, permita o acesso ao microfone. Para começarmos a conversar, você pode usar o "Reconhecimento Contínuo" ou "Segurar para Falar".
             </div>
         </div>
     </div>
@@ -286,50 +297,60 @@
     <script>
         class VoiceAssistant {
             constructor() {
-                this.recognition = null;
+                this.recognition = null; // Para o modo contínuo (Web Speech API)
                 this.isListening = false;
-                this.recognitionActiveByUser = false; // Flag para controlar se o usuário quer o reconhecimento ativo
-                this.audioContext = null;
-                this.microphone = null;
+                this.recognitionActiveByUser = false; 
+
+                this.mediaRecorder = null; // Para o modo "Segurar para Falar"
+                this.audioChunks = [];
+                this.isRecording = false;
+
+                this.audioContext = null; // Para monitoramento de volume
+                this.microphoneStream = null; // Armazena a stream do microfone para parar corretamente
                 this.analyser = null;
                 this.dataArray = null;
-                this.silenceThreshold = 25; // Limite de volume para considerar silêncio (ajustado)
+                this.silenceThreshold = 25; 
                 
                 this.initializeElements();
                 this.setupSpeechRecognition();
                 this.setupEventListeners();
-                this.setupAudioMonitoring(); // Chamado no construtor para pedir permissão ao carregar
+                this.setupAudioMonitoring(); 
             }
             
             initializeElements() {
                 this.statusEl = document.getElementById('status');
                 this.startBtn = document.getElementById('startBtn');
                 this.stopBtn = document.getElementById('stopBtn');
+                this.talkButton = document.getElementById('talkButton');
                 this.conversationEl = document.getElementById('conversation');
                 this.volumeBar = document.getElementById('volumeBar');
             }
             
             async setupAudioMonitoring() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Pede permissão uma vez para a stream de áudio, que será usada tanto pelo
+                    // monitoramento de volume quanto pelo MediaRecorder.
+                    this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    this.microphone = this.audioContext.createMediaStreamSource(stream);
+                    const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
                     this.analyser = this.audioContext.createAnalyser();
                     
                     this.analyser.fftSize = 256;
                     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                     
-                    this.microphone.connect(this.analyser);
-                    // Desconecta do destino para evitar feedback de áudio, mas permite análise
-                    // this.analyser.connect(this.audioContext.destination); // Não é mais necessário
+                    source.connect(this.analyser);
                     this.monitorAudio();
                 } catch (error) {
-                    console.error('Erro ao acessar microfone para monitoramento:', error);
-                    let errorMessage = 'Erro ao acessar microfone para monitoramento. Verifique as permissões do navegador.';
+                    console.error('Erro ao acessar microfone para monitoramento ou gravação:', error);
+                    let errorMessage = 'Erro ao acessar microfone para monitoramento/gravação. Verifique as permissões do navegador.';
                     if (error.name === 'NotAllowedError') {
                         errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso ao microfone nas configurações do seu navegador.';
                     }
                     this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                    // Desabilita botões se o microfone não puder ser acessado
+                    this.startBtn.disabled = true;
+                    this.talkButton.disabled = true;
                 }
             }
             
@@ -337,21 +358,21 @@
                 if (!this.analyser) return;
                 
                 this.analyser.getByteFrequencyData(this.dataArray);
-                
                 let sum = 0;
                 for (let i = 0; i < this.dataArray.length; i++) {
                     sum += this.dataArray[i];
                 }
                 const average = sum / this.dataArray.length;
                 
-                this.volumeBar.style.width = Math.min(average * 2, 100) + '%'; // Escala para 0-100%
+                this.volumeBar.style.width = Math.min(average * 2, 100) + '%';
                 
                 requestAnimationFrame(() => this.monitorAudio());
             }
             
             setupSpeechRecognition() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge para melhor experiência.', 'bot');
+                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz contínuo. Tente usar a opção "Segurar para Falar".', 'bot');
+                    this.startBtn.disabled = true; // Desabilita o botão de reconhecimento contínuo se não suportado
                     return;
                 }
                 
@@ -369,47 +390,61 @@
             }
             
             setupEventListeners() {
-                this.startBtn.addEventListener('click', () => this.startListening());
-                this.stopBtn.addEventListener('click', () => this.stopListening());
+                // Eventos para o reconhecimento contínuo (Web Speech API)
+                this.startBtn.addEventListener('click', () => this.startListeningContinuous());
+                this.stopBtn.addEventListener('click', () => this.stopListeningContinuous());
+
+                // Eventos para o modo "Segurar para Falar" (MediaRecorder)
+                this.talkButton.addEventListener('mousedown', () => this.startRecording());
+                this.talkButton.addEventListener('mouseup', () => this.stopRecording());
+                this.talkButton.addEventListener('touchstart', (e) => { e.preventDefault(); this.startRecording(); }); // Prevent default to avoid scrolling
+                this.talkButton.addEventListener('touchend', (e) => { e.preventDefault(); this.stopRecording(); });
 
                 if ('speechSynthesis' in window) {
-                    speechSynthesis.onvoiceschanged = () => {
-                        // Garante que as vozes estejam carregadas.
-                    };
+                    speechSynthesis.onvoiceschanged = () => {};
                 }
             }
             
-            startListening() {
-                if (!this.recognition) return;
-                this.recognitionActiveByUser = true; // Define que o usuário quer o reconhecimento ativo
+            // --- Métodos para Reconhecimento Contínuo (Web Speech API) ---
+            startListeningContinuous() {
+                if (!this.recognition || !this.microphoneStream) {
+                    this.addMessage('Bloquito: Microfone não disponível ou reconhecimento não suportado. Verifique as permissões.', 'bot');
+                    return;
+                }
+                // Desabilita o MediaRecorder enquanto o reconhecimento contínuo está ativo
+                this.talkButton.disabled = true;
+
+                this.recognitionActiveByUser = true; 
                 try {
                     this.recognition.start();
                 } catch (error) {
-                    console.error('Erro ao iniciar reconhecimento:', error);
+                    console.error('Erro ao iniciar reconhecimento contínuo:', error);
                     if (error.name === 'InvalidStateError') {
-                         this.addMessage('Bloquito: O reconhecimento já está ativo ou houve um problema ao tentar iniciá-lo. Tente parar e iniciar novamente.', 'bot');
+                         this.addMessage('Bloquito: O reconhecimento contínuo já está ativo ou houve um problema ao tentar iniciá-lo. Tente parar e iniciar novamente.', 'bot');
                     } else if (error.name === 'NotAllowedError') {
                         this.addMessage('Bloquito: A permissão de microfone para reconhecimento de fala foi negada. Por favor, verifique as configurações do seu navegador e tente novamente.', 'bot');
                     } else {
-                         this.addMessage(`Bloquito: Não foi possível iniciar o reconhecimento: ${error.message}.`, 'bot');
+                         this.addMessage(`Bloquito: Não foi possível iniciar o reconhecimento contínuo: ${error.message}.`, 'bot');
                     }
-                    this.recognitionActiveByUser = false; // Reverte se falhou ao iniciar
+                    this.recognitionActiveByUser = false; 
                     this.updateStatus('Não está ouvindo', 'not-listening');
                     this.startBtn.disabled = false;
                     this.stopBtn.disabled = true;
+                    this.talkButton.disabled = false; // Reabilita o botão de falar se o contínuo falhar
                 }
             }
             
-            stopListening() {
+            stopListeningContinuous() {
                 if (this.recognition) {
-                    this.recognitionActiveByUser = false; // Define que o usuário NÃO quer mais o reconhecimento ativo
+                    this.recognitionActiveByUser = false; 
                     this.recognition.stop();
                 }
+                this.talkButton.disabled = false; // Reabilita o botão de falar ao parar
             }
             
             onStart() {
                 this.isListening = true;
-                this.updateStatus('Ouvindo...', 'listening');
+                this.updateStatus('Ouvindo (Contínuo)...', 'listening');
                 this.startBtn.disabled = true;
                 this.stopBtn.disabled = false;
             }
@@ -427,33 +462,30 @@
                 
                 finalTranscript = finalTranscript.trim();
 
-                // Processa apenas se houver transcrição e confiança razoável (confiança mínima aumentada)
                 if (finalTranscript.length > 0 && confidence > 0.6) { 
                     this.addMessage(`Você: ${finalTranscript}`, 'user');
                     this.processCommand(finalTranscript.toLowerCase());
                 } else if (finalTranscript.length > 0 && confidence <= 0.6) {
-                    // Se houver algum som, mas a confiança for muito baixa, ignora para evitar "não entendi" desnecessário
-                    console.log(`Bloquito: Ignorando entrada de baixa confiança: "${finalTranscript}" (Confiança: ${confidence.toFixed(2)})`);
+                    console.log(`Bloquito: Ignorando entrada de baixa confiança (contínuo): "${finalTranscript}" (Confiança: ${confidence.toFixed(2)})`);
                 }
             }
             
             onError(event) {
-                // 'no-speech' ocorre quando não detecta fala; ignoramos para evitar mensagens de erro excessivas
                 if (event.error !== 'no-speech') {
-                    console.error('Erro no reconhecimento:', event.error);
+                    console.error('Erro no reconhecimento contínuo:', event.error);
                     let errorMessage = '';
                     switch (event.error) {
                         case 'audio-capture':
-                            errorMessage = 'Erro ao capturar áudio do microfone.';
+                            errorMessage = 'Erro ao capturar áudio do microfone para reconhecimento contínuo.';
                             break;
                         case 'not-allowed':
-                            errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso nas configurações do navegador.';
+                            errorMessage = 'Permissão de microfone negada para reconhecimento contínuo.';
                             break;
                         case 'network':
-                            errorMessage = 'Erro de rede. Verifique sua conexão.';
+                            errorMessage = 'Erro de rede no reconhecimento contínuo. Verifique sua conexão.';
                             break;
                         default:
-                            errorMessage = `Erro no reconhecimento: ${event.error}`;
+                            errorMessage = `Erro no reconhecimento contínuo: ${event.error}`;
                     }
                     this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
                 }
@@ -465,17 +497,82 @@
                 this.startBtn.disabled = false;
                 this.stopBtn.disabled = true;
                 
-                // Reinicia automaticamente apenas se o usuário ainda quer o reconhecimento ativo
                 if (this.recognitionActiveByUser) {
-                    // Pequeno atraso para evitar "loop" de start/stop rápido
                     setTimeout(() => {
-                        if (this.recognitionActiveByUser) { // Verifica novamente após o atraso
-                            this.startListening();
+                        if (this.recognitionActiveByUser) { 
+                            this.startListeningContinuous();
                         }
                     }, 500); 
                 }
             }
-            
+
+            // --- Métodos para "Segurar para Falar" (MediaRecorder) ---
+            async startRecording() {
+                if (!this.microphoneStream) {
+                    this.addMessage('Bloquito: Microfone não disponível para gravação. Por favor, permita o acesso.', 'bot');
+                    return;
+                }
+                // Desabilitar o reconhecimento contínuo se estiver ativo
+                if (this.isListening) {
+                    this.stopListeningContinuous();
+                }
+
+                this.audioChunks = [];
+                this.mediaRecorder = new MediaRecorder(this.microphoneStream);
+                this.mediaRecorder.ondataavailable = (event) => {
+                    this.audioChunks.push(event.data);
+                };
+                this.mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                    // Aqui você enviaria o audioBlob para um servidor para transcrição
+                    // Para este exemplo, vamos simular uma transcrição
+                    this.addMessage('Bloquito: Áudio gravado. Processando...', 'bot');
+                    this.simulateTranscription(audioBlob);
+                    this.isRecording = false;
+                    this.talkButton.textContent = 'Segurar para Falar';
+                    this.talkButton.style.backgroundColor = '#FF5722';
+                };
+
+                this.mediaRecorder.start();
+                this.isRecording = true;
+                this.talkButton.textContent = 'Gravando... Soltar para Processar';
+                this.talkButton.style.backgroundColor = '#E64A19';
+                this.updateStatus('Gravando Áudio...', 'listening');
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.updateStatus('Não está ouvindo', 'not-listening'); // Volta ao estado normal
+                }
+            }
+
+            // *** ESTA FUNÇÃO SIMULA A TRANSCRIÇÃO ***
+            // Na vida real, você enviaria o 'audioBlob' para uma API de Speech-to-Text
+            async simulateTranscription(audioBlob) {
+                // Simulando o envio e a resposta de uma API de STT
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5 segundos
+
+                // Aqui você pode adicionar lógica para simular respostas diferentes
+                // baseadas em algum critério, mas para simplicidade, uma resposta fixa ou ciclo
+                const simulatedTranscripts = [
+                    "oi bloquito",
+                    "qual o kit bloco mais",
+                    "quem e a asthor barden",
+                    "tudo bem",
+                    "que horas são",
+                    "fale sobre o steamaker",
+                    "como instalo o arduino",
+                    "parar"
+                ];
+                // Pega um comando aleatório ou baseado no tempo para simular variedade
+                const simulatedCommand = simulatedTranscripts[Math.floor(Math.random() * simulatedTranscripts.length)];
+                
+                this.addMessage(`Você (gravado): ${simulatedCommand}`, 'user');
+                this.processCommand(simulatedCommand);
+            }
+
+            // --- Lógica de Processamento de Comandos (compartilhada) ---
             processCommand(command) {
                 let response = '';
                 const normalizedCommand = this.normalizeText(command);
@@ -492,18 +589,18 @@
                     response = `Agora são ${now.getHours()} horas e ${now.getMinutes().toString().padStart(2, '0')} minutos.`;
                 } else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
                     response = 'Parando o reconhecimento de voz. Até mais!';
-                    this.stopListening();
+                    this.stopListeningContinuous(); // Assegura que o contínuo pare
+                    this.stopRecording(); // Assegura que a gravação pare
                 }
                 // --- Perguntas Específicas sobre Bloco+ e Asthor Barden ---
                 else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('o que e blocomais') || normalizedCommand.includes('fale sobre o bloco mais')) {
                     response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
-                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.included
-('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
+                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
                     response = 'O STEAMAKER é um kit semelhante ao Bloco+, também da Asthor Barden, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
                 } else if (normalizedCommand.includes('bloco mais bot') || normalizedCommand.includes('bloco+ bot') || normalizedCommand.includes('o que e bloco mais bot') || normalizedCommand.includes('esp32 bloco mais')) {
                     response = 'O Bloco+Bot é o microcontrolador central do Bloco+, ele vem com um ESP32 integrado, acelerômetro, giroscópio, sensor de temperatura, e tem capacidade de controlar dois motores DC, LEDs e um buzzer. É o cérebro do sistema!';
                 } else if (normalizedCommand.includes('quais sao os componentes do bloco mais') || normalizedCommand.includes('componentes bloco mais') || normalizedCommand.includes('modulos bloco mais') || normalizedCommand.includes('pecas bloco mais')) {
-                    response = 'O kit Bloco+ inclui o Bloco+Bot, módulos de conexão (vermelho e preto), módulos de resistores (H e L), módulo press switch, módulo power (alimentação 5V), módulo LEDs com cinco cores, módulos de capacitores (C e E), módulo Oscilador, módulo amplificador, módulo PIC com programas pré-definidos, módulo chipcorder para gravação/reprodução de sons. Também possui outros como NPN, PNP, SCR, potenciômetro, speaker, piezo, sensores infravermelhos, motores DC, servo motores e cabos de conexão.';
+                    response = 'O kit Bloco+ inclui o Bloco+Bot, módulos de conexão (vermelho e preto), módulos de resistores (H e L), módulo press switch, módulo power (alimentação 5V), módulo LEDs com cinco cores, módulos de capacitores (C e E), módulo Oscilador, módulo amplificador, módulo PIC com programas pré-definidos, módulo chipcorder para gravação/reprodução de sons. Também possui outros como NPN, PNP, SCR, potenciômetro, speaker, piezo, sensores infravermelros, motores DC, servo motores e cabos de conexão.';
                 } else if (normalizedCommand.includes('como instalar arduino') || normalizedCommand.includes('instalacao arduino') || normalizedCommand.includes('arduino para bloco mais')) {
                     response = 'A instalação do ambiente de programação do Bloco+ Bot envolve quatro partes: uma modificação do software Arduino IDE com Ardublock, a instalação de um driver de comunicação para o ESP32, um arquivo de configuração para o Arduino IDE reconhecer o ESP32, e a instalação da biblioteca ESP32Servo. Você pode encontrar os passos detalhados no documento de "Instruções de instalação do Arduino".';
                 } else if (normalizedCommand.includes('mapa de portas') || normalizedCommand.includes('portas bloco mais bot') || normalizedCommand.includes('conexoes bloco mais bot')) {
@@ -559,22 +656,24 @@
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'pt-BR';
-                    utterance.rate = 0.9; // Velocidade da fala
+                    utterance.rate = 0.9; 
 
-                    // Imediatamente para o reconhecimento antes de falar
+                    // Para o reconhecimento contínuo se estiver ativo antes de falar
                     if (this.recognition && this.isListening) {
-                        this.recognition.stop(); // Isso irá disparar o evento onEnd
+                        this.recognition.stop(); 
+                    }
+                    // Para a gravação do MediaRecorder se estiver ativa antes de falar
+                    if (this.mediaRecorder && this.isRecording) {
+                        this.mediaRecorder.stop();
                     }
 
                     utterance.onend = () => {
-                        // O método onEnd já contém a lógica para reiniciar o reconhecimento
-                        // se recognitionActiveByUser for true, então não precisamos chamar start() aqui.
+                        // Se o reconhecimento contínuo estava ativo, ele será reiniciado pelo onEnd dele.
+                        // Se era o modo "Segurar para Falar", ele já parou e está pronto para o próximo comando.
                     };
 
                     utterance.onerror = (event) => {
                         console.error('Erro na síntese de fala:', event.error);
-                        // Em caso de erro na fala, onEnd já teria sido disparado pelo stop()
-                        // e tentaria reiniciar o reconhecimento.
                     };
 
                     speechSynthesis.speak(utterance);
