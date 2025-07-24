@@ -17,6 +17,7 @@
             background: #343541;
             color: #ececf1;
             height: 100vh;
+            height: 100dvh; /* Altura dinâmica para mobile */
             display: flex;
             overflow: hidden;
         }
@@ -195,6 +196,8 @@
             flex-direction: column;
             position: relative;
             transition: margin-left 0.3s ease;
+            height: 100vh;
+            height: 100dvh; /* Altura dinâmica para mobile */
         }
         
         .main-content.sidebar-hidden {
@@ -206,6 +209,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            position: relative;
         }
         
         .chat-header {
@@ -215,6 +219,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0; /* Não encolhe */
         }
         
         .chat-title-header {
@@ -229,6 +234,7 @@
             max-width: 768px;
             margin: 0 auto;
             width: 100%;
+            padding-bottom: 100px; /* Espaço extra para mobile */
         }
         
         .message {
@@ -297,6 +303,10 @@
             max-width: 768px;
             margin: 0 auto;
             width: 100%;
+            flex-shrink: 0; /* Não encolhe */
+            position: sticky; /* Fica grudado no final */
+            bottom: 0;
+            z-index: 100;
         }
         
         .input-wrapper {
@@ -702,6 +712,11 @@
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            body {
+                height: 100vh;
+                height: 100dvh; /* Altura dinâmica para mobile */
+            }
+            
             .sidebar {
                 position: fixed;
                 left: 0;
@@ -712,6 +727,36 @@
             
             .main-content {
                 width: 100%;
+                height: 100vh;
+                height: 100dvh; /* Altura dinâmica para mobile */
+            }
+            
+            .conversation {
+                padding: 16px 12px;
+                padding-bottom: 120px; /* Mais espaço para mobile */
+            }
+            
+            .input-container {
+                padding: 12px;
+                position: fixed; /* Fixo no mobile */
+                bottom: 0;
+                left: 0;
+                right: 0;
+                max-width: none;
+                margin: 0;
+                background: #343541;
+                border-top: 1px solid #4d4d4f;
+                z-index: 200;
+                /* Adiciona safe area para iPhone */
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            }
+            
+            .input-wrapper {
+                padding: 10px 12px;
+            }
+            
+            .text-input {
+                font-size: 16px; /* Evita zoom no iOS */
             }
             
             .voice-animation {
@@ -736,11 +781,34 @@
                 gap: 12px;
             }
             
-            .voice-controls {
+                        .voice-controls {
                 flex-direction: column;
                 gap: 12px;
                 width: 100%;
                 max-width: 300px;
+            }
+        }
+        
+        /* Ajustes específicos para iOS Safari */
+        @supports (-webkit-touch-callout: none) {
+            .main-content {
+                height: 100vh;
+                height: -webkit-fill-available;
+            }
+            
+            .input-container {
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            }
+            
+            .conversation {
+                padding-bottom: calc(120px + env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* Ajustes para teclado virtual */
+        @media (max-width: 768px) and (max-height: 500px) {
+            .conversation {
+                padding-bottom: 140px;
             }
         }
     </style>
@@ -911,7 +979,8 @@
                     // Fallback - usa base mínima se falhar
                     knowledgeBase = {
                         "default": {
-                            "response": "Desculpe, houve um erro ao carregar minha base de conhecimento. Algumas funcionalidades podem estar limitadas."
+                            "response": "Desculpe, houve um erro ao carregar minha base de conhecimento. Algumas funcionalidades podem estar limitadas.",
+                            "speech": "Desculpe, houve um erro ao carregar minha base de conhecimento. Algumas funcionalidades podem estar limitadas."
                         }
                     };
                     
@@ -934,7 +1003,8 @@
             findResponse(command) {
                 if (!knowledgeBase) {
                     return {
-                        response: "Base de conhecimento ainda não foi carregada. Aguarde um momento."
+                        response: "Base de conhecimento ainda não foi carregada. Aguarde um momento.",
+                        speech: "Base de conhecimento ainda não foi carregada. Aguarde um momento."
                     };
                 }
                 
@@ -954,7 +1024,8 @@
                 
                 // Retorna resposta padrão se não encontrar correspondência
                 return knowledgeBase.default || {
-                    response: "Não consegui processar sua solicitação."
+                    response: "Não consegui processar sua solicitação.",
+                    speech: "Não consegui processar sua solicitação."
                 };
             }
             
@@ -1185,7 +1256,7 @@
                     const title = content.length > 30 ? content.substring(0, 30) + '...' : content;
                     this.chats[this.currentChatId].title = title;
                     this.chatTitleHeader.textContent = title;
-                    this.renderChatHistory();
+                                        this.renderChatHistory();
                 }
                 
                 this.saveChats();
@@ -1285,7 +1356,7 @@
                     this.muteBtn.innerHTML = '<i class="fas fa-microphone"></i> Silenciar';
                     this.muteBtn.classList.remove('muted');
                     this.voiceStatus.textContent = 'Ouvindo';
-                                        this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
+                    this.voiceSubtitle.textContent = 'Fale naturalmente para conversar comigo';
                     this.voiceAnimation.classList.add('listening');
                     this.startListening();
                 }
@@ -1413,12 +1484,15 @@
                 });
             }
             
-            speak(text) {
+            speak(text, speechText = null) {
                 // Só fala se estiver no modo voz
                 if (!this.isVoiceMode || !('speechSynthesis' in window)) return;
                 
+                // Usa o texto específico para fala se fornecido, senão usa o texto normal
+                const textToSpeak = speechText || text;
+                
                 // Remove formatação para a fala
-                const cleanText = text.replace(/[^\w\s\.,!?]/gi, '').replace(/\n/g, ' ');
+                const cleanText = textToSpeak.replace(/[^\w\s\.,!?]/gi, '').replace(/\n/g, ' ');
                 
                 const utterance = new SpeechSynthesisUtterance(cleanText);
                 utterance.lang = 'pt-BR';
@@ -1460,27 +1534,7 @@
                 
                 speechSynthesis.speak(utterance);
             }
-            
-            // Função para buscar resposta na base de conhecimento
-            findResponse(command) {
-                const normalizedCommand = this.normalizeText(command);
-                
-                // Procura por correspondências nas palavras-chave
-                for (const [key, data] of Object.entries(knowledgeBase)) {
-                    if (key === 'default') continue;
-                    
-                    const keywords = data.keywords;
-                    for (const keyword of keywords) {
-                        if (normalizedCommand.includes(this.normalizeText(keyword))) {
-                            return data;
-                        }
-                    }
-                }
-                
-                // Retorna resposta padrão se não encontrar correspondência
-                return knowledgeBase.default;
-            }
-            
+
             processCommand(command) {
                 // Simula delay de processamento
                 setTimeout(() => {
@@ -1490,11 +1544,16 @@
                     // Busca resposta na base de conhecimento
                     const responseData = this.findResponse(command);
                     let response = responseData.response;
+                    let speechResponse = responseData.speech || responseData.response; // Usa speech se existir, senão usa response
                     
-                    // Substitui placeholders
+                    // Substitui placeholders no texto escrito
                     const userName = this.userName === 'Usuário' ? '' : `, ${this.userName}`;
                     response = response.replace('{userName}', userName);
                     response = response.replace('{time}', timeString);
+                    
+                    // Substitui placeholders no texto falado
+                    speechResponse = speechResponse.replace('{userName}', userName);
+                    speechResponse = speechResponse.replace('{time}', timeString);
                     
                     // Ações especiais
                     if (responseData.action === 'stop_voice') {
@@ -1502,15 +1561,16 @@
                             ? 'Finalizando a conversa por voz. Você pode continuar conversando comigo por texto.'
                             : 'Você pode continuar conversando comigo por texto.';
                         response = response.replace('{stopAction}', stopAction);
+                        speechResponse = speechResponse.replace('{stopAction}', stopAction);
                         
                         if (this.isVoiceMode) {
                             setTimeout(() => this.closeVoiceMode(), 3000);
                         }
                     }
                     
-                    // Adiciona mensagem e fala (se no modo voz)
+                    // Adiciona mensagem (texto escrito) e fala (texto fonético)
                     this.addMessage(response, 'bot');
-                    this.speak(response);
+                    this.speak(response, speechResponse);
                     
                 }, 800);
             }
