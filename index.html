@@ -3,194 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloquito - Assistente de Voz para Celular</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Bloquito - Seu Assistente de Voz</title>
     <style>
-        * {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #2c7744 0%, #1e5631 100%);
+            background: linear-gradient(135deg, #4CAF50 0%, #2E8B57 100%); /* Um verde mais vibrante */
             color: #fff;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            box-sizing: border-box;
         }
         
         .container {
-            background: rgba(255, 255, 255, 0.12);
-            padding: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
             border-radius: 20px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-sizing: border-box;
         }
         
         h1 {
+            text-align: center;
             color: #fff;
-            font-size: 26px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-            margin-bottom: 5px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
-        .subtitle {
-            color: #FFD700;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .status-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .status {
+            text-align: center;
             margin: 20px 0;
             padding: 15px;
-            border-radius: 15px;
-            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-weight: bold;
+            transition: background 0.3s ease, border-color 0.3s ease;
             box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
         }
         
-        .status-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #f44336;
+        .listening {
+            background: rgba(76, 175, 80, 0.5); /* Verde mais claro */
+            border: 2px solid #A5D6A7;
         }
         
-        .status-indicator.listening {
-            background: #4CAF50;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        
-        .status-text {
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        .volume-container {
-            margin: 15px 0 25px;
+        .not-listening {
+            background: rgba(244, 67, 54, 0.5); /* Vermelho mais suave */
+            border: 2px solid #EF9A9A;
         }
         
         .volume-indicator {
             width: 100%;
             height: 10px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.3);
             border-radius: 5px;
+            margin: 10px 0 20px;
             overflow: hidden;
             box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-            margin-bottom: 8px;
         }
         
         .volume-bar {
             height: 100%;
-            background: #FFD700;
+            background: #FFD700; /* Dourado */
             width: 0%;
             transition: width 0.1s ease-out;
             border-radius: 5px;
         }
         
-        .volume-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
         .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            text-align: center;
             margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap; /* Para mobile */
         }
         
-        .btn {
-            background: #FFD700;
+        button {
+            background: #FFD700; /* Dourado */
             color: #333;
             border: none;
-            padding: 16px;
+            padding: 15px 30px;
             font-size: 16px;
-            border-radius: 50px;
+            border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            flex-grow: 1; /* Para mobile */
+            max-width: 250px; /* Para mobile */
         }
         
-        .btn:hover {
-            background: #FFC107;
-            transform: translateY(-2px);
+        button:hover {
+            background: #FFC107; /* Dourado mais escuro */
+            transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
         
-        .btn:disabled {
-            background: rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.5);
+        button:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ccc;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        
-        .btn.talk {
-            background: #FF5722;
-            color: white;
-            padding: 20px;
-            font-size: 18px;
+
+        #talkButton {
+            background: #FF5722; /* Laranja/Vermelho para o botão de falar */
+            color: #fff;
         }
-        
-        .btn.talk:hover {
+
+        #talkButton:hover {
             background: #E64A19;
-        }
-        
-        .btn.talk i {
-            font-size: 24px;
         }
         
         .conversation {
             background: rgba(0, 0, 0, 0.2);
             padding: 20px;
-            border-radius: 15px;
+            border-radius: 10px;
             margin: 20px 0;
             max-height: 250px;
             overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
         }
         
         .message {
-            margin: 12px 0;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.4;
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.5;
             word-wrap: break-word;
-            opacity: 0;
+            opacity: 0; /* Começa invisível para animação */
             transform: translateY(10px);
             animation: fadeInMessage 0.3s forwards;
-            position: relative;
-            max-width: 85%;
         }
 
         @keyframes fadeInMessage {
@@ -201,194 +153,143 @@
         }
         
         .user-message {
-            background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
-            margin-left: auto;
+            background: rgba(25, 118, 210, 0.6); /* Azul mais escuro */
             text-align: right;
-            border-bottom-right-radius: 5px;
+            margin-left: 20%;
         }
         
         .bot-message {
-            background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-        }
-        
-        .message-time {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 5px;
+            background: rgba(30, 136, 229, 0.6); /* Azul mais claro */
+            margin-right: 20%;
         }
         
         .commands {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px 20px;
-            border-radius: 15px;
+            border-radius: 10px;
             margin: 20px 0;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
         }
         
         .commands h3 {
             margin-top: 0;
-            color: #FFD700;
+            color: #FFD700; /* Dourado */
             text-align: center;
-            margin-bottom: 15px;
-            font-size: 18px;
         }
         
-        .commands-grid {
+        .commands ul {
+            list-style: none;
+            padding: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
         }
         
-        .command-item {
+        .commands li {
             background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .permission-info {
-            background: rgba(255, 152, 0, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            border: 1px solid rgba(255, 152, 0, 0.3);
-            text-align: center;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
-        
-        .permission-info i {
-            color: #FFC107;
-            margin-right: 8px;
-        }
-        
-        .mic-icon {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
+
         /* Responsividade */
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .container {
-                padding: 20px 15px;
-                border-radius: 15px;
+                padding: 20px;
+                width: 95%;
             }
-            
+            h1 {
+                font-size: 26px;
+            }
+            button {
+                padding: 12px 25px;
+                font-size: 15px;
+            }
+            .status, .message, .commands h3, .commands ul li {
+                font-size: 14px;
+            }
+            .user-message, .bot-message {
+                margin: 0; /* Remove side margins for full width */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                width: 100%;
+                border-radius: 0;
+                min-height: 100vh;
+            }
             h1 {
                 font-size: 22px;
             }
-            
-            .btn {
-                padding: 14px;
-                font-size: 15px;
+            .controls {
+                flex-direction: column;
+                gap: 10px;
             }
-            
-            .btn.talk {
-                padding: 18px;
+            button {
+                width: 100%;
+                max-width: none;
             }
-            
-            .message {
-                font-size: 14px;
-                padding: 10px 14px;
+            .status, .message, .commands h3, .commands ul li {
+                font-size: 13px;
             }
-            
-            .commands-grid {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            }
-            
-            .command-item {
-                font-size: 12px;
-                padding: 8px;
-            }
-        }
-        
-        @media (max-width: 400px) {
-            h1 {
-                font-size: 20px;
-            }
-            
-            .subtitle {
-                font-size: 12px;
-            }
-            
-            .btn {
-                font-size: 14px;
-            }
-            
-            .btn.talk {
-                font-size: 16px;
-            }
-            
-            .commands-grid {
-                grid-template-columns: 1fr;
+            .conversation {
+                max-height: 200px; /* Smaller height for mobile */
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <i class="fas fa-microphone mic-icon"></i>
-            <h1>Bloquito</h1>
-            <div class="subtitle">Assistente de Voz para Celular</div>
+        <h1>Bloquito - Seu Assistente de Voz</h1>
+        
+        <div id="status" class="status not-listening">
+            Não está ouvindo
         </div>
         
-        <div class="permission-info">
-            <i class="fas fa-exclamation-circle"></i>
-            Para usar, permita o acesso ao microfone quando solicitado
-        </div>
-        
-        <div class="status-container">
-            <div class="status-indicator" id="statusIndicator"></div>
-            <div class="status-text" id="statusText">Não está ouvindo</div>
-        </div>
-        
-        <div class="volume-container">
-            <div class="volume-indicator">
-                <div class="volume-bar" id="volumeBar"></div>
-            </div>
-            <div class="volume-label">
-                <span>Baixo</span>
-                <span>Alto</span>
-            </div>
+        <div class="volume-indicator">
+            <div id="volumeBar" class="volume-bar"></div>
         </div>
         
         <div class="controls">
-            <button class="btn" id="startBtn">
-                <i class="fas fa-play"></i> Iniciar Reconhecimento
-            </button>
-            <button class="btn" id="stopBtn" disabled>
-                <i class="fas fa-stop"></i> Parar Reconhecimento
-            </button>
-            <button class="btn talk" id="talkButton">
-                <i class="fas fa-microphone"></i> Segurar para Falar
-            </button>
+            <button id="startBtn">Iniciar Reconhecimento Contínuo</button>
+            <button id="stopBtn" disabled>Parar Reconhecimento</button>
+            <button id="talkButton">Segurar para Falar</button>
         </div>
 
-        <div class="conversation" id="conversation">
-            <div class="message bot-message">
-                Olá! Eu sou o Bloquito. Para começar, toque em "Iniciar Reconhecimento" ou "Segurar para Falar".
-            </div>
+        <div class="commands">
+            <h3>Importante para uso em Celular:</h3>
+            <p>1. Ao carregar a página, o navegador pode pedir permissão para usar o microfone (para a barra de volume). **Por favor, conceda.**</p>
+            <p>2. O botão **"Iniciar Reconhecimento Contínuo"** usa a API de Reconhecimento de Voz do navegador. Em celulares, esta API exige um **toque inicial** e pode ser interrompida em segundo plano pelo navegador. Sua precisão e confiabilidade podem variar.</p>
+            <p>3. O botão **"Segurar para Falar"** usa uma abordagem de gravação local (MediaRecorder). **Para simular o reconhecimento de voz**, após a gravação, o Bloquito pedirá que você **digite o que disse**. Esta é a forma mais confiável de testar a base de diálogo em celulares sem um backend.</p>
+            <p>4. Se o Bloquito não responder, **verifique se você concedeu a permissão de microfone** para este site nas configurações do seu navegador.</p>
         </div>
         
         <div class="commands">
-            <h3>Comandos Reconhecidos</h3>
-            <div class="commands-grid">
-                <div class="command-item">Oi / Olá</div>
-                <div class="command-item">Bom dia / Boa tarde</div>
-                <div class="command-item">Como você está?</div>
-                <div class="command-item">Quem é você?</div>
-                <div class="command-item">Que horas são?</div>
-                <div class="command-item">O que é Bloco+?</div>
-                <div class="command-item">O que é STEAMAKER?</div>
-                <div class="command-item">Fale sobre o CorelLASER</div>
+            <h3>Comandos e Perguntas Sugeridas:</h3>
+            <ul>
+                <li>"Oi", "Olá", "Bom dia", "Boa tarde", "Boa noite"</li>
+                <li>"Tudo bem?", "Como vai?", "Você está bem?"</li>
+                <li>"Quem é você?", "Como é seu nome?", "Fale sobre você"</li>
+                <li>"Que horas são?"</li>
+                <li>"Parar"</li>
+                <li>"O que é Bloco+?", "O que é Asthor Barden?"</li>
+                <li>"O que é STEAMAKER?"</li>
+                <li>"O que é Bloco+ Bot?"</li>
+                <li>"Quais são os componentes do Bloco+?"</li>
+                <li>"Como instalar Arduino para Bloco+?"</li>
+                <li>"O que são as portas do Bloco+ Bot?"</li>
+                <li>"Fale sobre o CorelLASER"</li>
+                <li>"O que são as Fichas Asthor?"</li>
+            </ul>
+        </div>
+        
+        <div class="conversation" id="conversation">
+            <div class="message bot-message">
+                Olá! Eu sou o Bloquito. Por favor, permita o acesso ao microfone. Para começarmos a conversar, você pode usar o "Reconhecimento Contínuo" ou "Segurar para Falar".
             </div>
         </div>
     </div>
@@ -396,24 +297,28 @@
     <script>
         class VoiceAssistant {
             constructor() {
-                this.recognition = null;
+                this.recognition = null; // Para o modo contínuo (Web Speech API)
                 this.isListening = false;
-                this.recognitionActiveByUser = false;
-                this.audioContext = null;
-                this.microphoneStream = null;
+                this.recognitionActiveByUser = false; 
+
+                this.mediaRecorder = null; // Para o modo "Segurar para Falar"
+                this.audioChunks = [];
+                this.isRecording = false;
+
+                this.audioContext = null; // Para monitoramento de volume
+                this.microphoneStream = null; // Armazena a stream do microfone para parar corretamente
                 this.analyser = null;
                 this.dataArray = null;
-                this.beepSound = new Audio();
+                this.silenceThreshold = 25; 
                 
                 this.initializeElements();
-                this.loadBeepSound();
+                this.setupSpeechRecognition();
                 this.setupEventListeners();
-                this.setupAudioMonitoring();
+                this.setupAudioMonitoring(); 
             }
             
             initializeElements() {
-                this.statusIndicator = document.getElementById('statusIndicator');
-                this.statusText = document.getElementById('statusText');
+                this.statusEl = document.getElementById('status');
                 this.startBtn = document.getElementById('startBtn');
                 this.stopBtn = document.getElementById('stopBtn');
                 this.talkButton = document.getElementById('talkButton');
@@ -421,15 +326,11 @@
                 this.volumeBar = document.getElementById('volumeBar');
             }
             
-            loadBeepSound() {
-                // Beep curto para feedback
-                this.beepSound.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-            }
-            
             async setupAudioMonitoring() {
                 try {
+                    // Pede permissão uma vez para a stream de áudio, que será usada tanto pelo
+                    // monitoramento de volume quanto pelo MediaRecorder.
                     this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.setupSpeechRecognition();
                     
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
@@ -441,14 +342,13 @@
                     source.connect(this.analyser);
                     this.monitorAudio();
                 } catch (error) {
-                    console.error('Erro ao acessar microfone:', error);
-                    let errorMessage = 'Erro ao acessar microfone.';
+                    console.error('Erro ao acessar microfone para monitoramento ou gravação:', error);
+                    let errorMessage = 'Erro ao acessar microfone para monitoramento/gravação. Verifique as permissões do navegador.';
                     if (error.name === 'NotAllowedError') {
-                        errorMessage = 'Permissão de microfone negada. Atualize as permissões nas configurações do navegador.';
-                        this.statusText.textContent = 'Permissão negada';
-                        this.statusIndicator.style.backgroundColor = '#FF9800';
+                        errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso ao microfone nas configurações do seu navegador.';
                     }
                     this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                    // Desabilita botões se o microfone não puder ser acessado
                     this.startBtn.disabled = true;
                     this.talkButton.disabled = true;
                 }
@@ -471,8 +371,8 @@
             
             setupSpeechRecognition() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge.', 'bot');
-                    this.startBtn.disabled = true;
+                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz contínuo. Tente usar a opção "Segurar para Falar".', 'bot');
+                    this.startBtn.disabled = true; // Desabilita o botão de reconhecimento contínuo se não suportado
                     return;
                 }
                 
@@ -480,7 +380,7 @@
                 this.recognition = new SpeechRecognition();
                 
                 this.recognition.continuous = true;
-                this.recognition.interimResults = true;
+                this.recognition.interimResults = false;
                 this.recognition.lang = 'pt-BR';
                 
                 this.recognition.onstart = () => this.onStart();
@@ -490,100 +390,105 @@
             }
             
             setupEventListeners() {
-                this.startBtn.addEventListener('click', () => this.startListening());
-                this.stopBtn.addEventListener('click', () => this.stopListening());
-                
-                this.talkButton.addEventListener('mousedown', () => this.startListening());
-                this.talkButton.addEventListener('mouseup', () => this.stopListening());
-                
-                this.talkButton.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.startListening();
-                });
-                
-                this.talkButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.stopListening();
-                });
+                // Eventos para o reconhecimento contínuo (Web Speech API)
+                this.startBtn.addEventListener('click', () => this.startListeningContinuous());
+                this.stopBtn.addEventListener('click', () => this.stopListeningContinuous());
+
+                // Eventos para o modo "Segurar para Falar" (MediaRecorder)
+                this.talkButton.addEventListener('mousedown', () => this.startRecording());
+                this.talkButton.addEventListener('mouseup', () => this.stopRecording());
+                this.talkButton.addEventListener('touchstart', (e) => { e.preventDefault(); this.startRecording(); }); // Prevent default to avoid scrolling
+                this.talkButton.addEventListener('touchend', (e) => { e.preventDefault(); this.stopRecording(); });
+
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.onvoiceschanged = () => {};
+                }
             }
             
-            startListening() {
-                if (!this.recognition) return;
-                
-                this.playBeep();
-                this.recognitionActiveByUser = true;
-                
+            // --- Métodos para Reconhecimento Contínuo (Web Speech API) ---
+            startListeningContinuous() {
+                if (!this.recognition || !this.microphoneStream) {
+                    this.addMessage('Bloquito: Microfone não disponível ou reconhecimento não suportado. Verifique as permissões.', 'bot');
+                    return;
+                }
+                // Desabilita o MediaRecorder enquanto o reconhecimento contínuo está ativo
+                this.talkButton.disabled = true;
+
+                this.recognitionActiveByUser = true; 
                 try {
                     this.recognition.start();
                 } catch (error) {
-                    console.error('Erro ao iniciar reconhecimento:', error);
-                    this.addMessage('Bloquito: Não foi possível iniciar o reconhecimento. Tente novamente.', 'bot');
-                    this.updateStatus('Erro ao iniciar', 'error');
+                    console.error('Erro ao iniciar reconhecimento contínuo:', error);
+                    if (error.name === 'InvalidStateError') {
+                         this.addMessage('Bloquito: O reconhecimento contínuo já está ativo ou houve um problema ao tentar iniciá-lo. Tente parar e iniciar novamente.', 'bot');
+                    } else if (error.name === 'NotAllowedError') {
+                        this.addMessage('Bloquito: A permissão de microfone para reconhecimento de fala foi negada. Por favor, verifique as configurações do seu navegador e tente novamente.', 'bot');
+                    } else {
+                         this.addMessage(`Bloquito: Não foi possível iniciar o reconhecimento contínuo: ${error.message}.`, 'bot');
+                    }
+                    this.recognitionActiveByUser = false; 
+                    this.updateStatus('Não está ouvindo', 'not-listening');
+                    this.startBtn.disabled = false;
+                    this.stopBtn.disabled = true;
+                    this.talkButton.disabled = false; // Reabilita o botão de falar se o contínuo falhar
                 }
             }
             
-            playBeep() {
-                this.beepSound.play().catch(e => console.log('Beep não pode ser reproduzido:', e));
-            }
-            
-            stopListening() {
+            stopListeningContinuous() {
                 if (this.recognition) {
-                    this.recognitionActiveByUser = false;
+                    this.recognitionActiveByUser = false; 
                     this.recognition.stop();
-                    this.playBeep();
                 }
+                this.talkButton.disabled = false; // Reabilita o botão de falar ao parar
             }
             
             onStart() {
                 this.isListening = true;
-                this.updateStatus('Ouvindo...', 'listening');
+                this.updateStatus('Ouvindo (Contínuo)...', 'listening');
                 this.startBtn.disabled = true;
                 this.stopBtn.disabled = false;
-                this.talkButton.classList.add('active');
             }
             
             onResult(event) {
                 let finalTranscript = '';
-                let interimTranscript = '';
-                
+                let confidence = 0;
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
+                        finalTranscript += event.results[i][0].transcript;
+                        confidence = event.results[i][0].confidence;
                     }
                 }
                 
                 finalTranscript = finalTranscript.trim();
-                
-                if (finalTranscript) {
+
+                // Processa apenas se houver transcrição e confiança razoável (confiança mínima aumentada para 0.7)
+                if (finalTranscript.length > 0 && confidence > 0.7) { 
                     this.addMessage(`Você: ${finalTranscript}`, 'user');
                     this.processCommand(finalTranscript.toLowerCase());
+                } else if (finalTranscript.length > 0 && confidence <= 0.7) {
+                    console.log(`Bloquito: Ignorando entrada de baixa confiança (contínuo): "${finalTranscript}" (Confiança: ${confidence.toFixed(2)})`);
                 }
             }
             
             onError(event) {
                 if (event.error !== 'no-speech') {
-                    console.error('Erro no reconhecimento:', event.error);
-                    
+                    console.error('Erro no reconhecimento contínuo:', event.error);
                     let errorMessage = '';
                     switch (event.error) {
                         case 'audio-capture':
-                            errorMessage = 'Erro ao capturar áudio. Verifique o microfone.';
+                            errorMessage = 'Erro ao capturar áudio do microfone para reconhecimento contínuo.';
                             break;
                         case 'not-allowed':
-                            errorMessage = 'Permissão de microfone negada. Atualize as permissões.';
+                            errorMessage = 'Permissão de microfone negada para reconhecimento contínuo.';
                             break;
                         case 'network':
-                            errorMessage = 'Erro de rede. Verifique sua conexão.';
+                            errorMessage = 'Erro de rede no reconhecimento contínuo. Verifique sua conexão.';
                             break;
                         default:
-                            errorMessage = `Erro: ${event.error}`;
+                            errorMessage = `Erro no reconhecimento contínuo: ${event.error}`;
                     }
-                    
                     this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                    this.updateStatus('Erro', 'error');
                 }
             }
             
@@ -592,68 +497,140 @@
                 this.updateStatus('Não está ouvindo', 'not-listening');
                 this.startBtn.disabled = false;
                 this.stopBtn.disabled = true;
-                this.talkButton.classList.remove('active');
                 
                 if (this.recognitionActiveByUser) {
                     setTimeout(() => {
-                        if (this.recognitionActiveByUser) {
-                            this.startListening();
+                        if (this.recognitionActiveByUser) { 
+                            this.startListeningContinuous();
                         }
-                    }, 500);
+                    }, 500); 
                 }
             }
-            
+
+            // --- Métodos para "Segurar para Falar" (MediaRecorder) ---
+            async startRecording() {
+                if (!this.microphoneStream) {
+                    this.addMessage('Bloquito: Microfone não disponível para gravação. Por favor, permita o acesso.', 'bot');
+                    return;
+                }
+                // Desabilitar o reconhecimento contínuo se estiver ativo
+                if (this.isListening) {
+                    this.stopListeningContinuous();
+                }
+
+                this.audioChunks = [];
+                this.mediaRecorder = new MediaRecorder(this.microphoneStream);
+                this.mediaRecorder.ondataavailable = (event) => {
+                    this.audioChunks.push(event.data);
+                };
+                this.mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                    
+                    this.addMessage('Bloquito: Áudio gravado. Aguardando sua digitação para simular o comando...', 'bot');
+                    this.simulateTranscription(audioBlob); // Agora chama a simulação com prompt
+                    this.isRecording = false;
+                    this.talkButton.textContent = 'Segurar para Falar';
+                    this.talkButton.style.backgroundColor = '#FF5722';
+                };
+
+                this.mediaRecorder.start();
+                this.isRecording = true;
+                this.talkButton.textContent = 'Gravando... Soltar para Processar';
+                this.talkButton.style.backgroundColor = '#E64A19';
+                this.updateStatus('Gravando Áudio (Segurar para Falar)...', 'listening');
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.updateStatus('Não está ouvindo', 'not-listening'); // Volta ao estado normal
+                }
+            }
+
+            // *** FUNÇÃO DE SIMULAÇÃO DE TRANSCRIÇÃO (PEDE INPUT AO USUÁRIO) ***
+            // Na aplicação real, este 'audioBlob' seria enviado para uma API de Speech-to-Text
+            async simulateTranscription(audioBlob) {
+                // await new Promise(resolve => setTimeout(resolve, 1500)); // Remover ou ajustar este delay se não for útil para a simulação
+
+                const userSaid = prompt("Simulação: O que você disse ao microfone?\n(Na aplicação real, isso seria transcrito por uma API de voz)");
+                if (userSaid !== null) { // userSaid pode ser null se o usuário cancelar o prompt
+                    this.addMessage(`Você (gravado simulado): ${userSaid}`, 'user');
+                    this.processCommand(userSaid.toLowerCase());
+                } else {
+                    this.addMessage(`Bloquito: Transcrição simulada cancelada. Nenhuma ação realizada.`, 'bot');
+                }
+            }
+
+            // --- Lógica de Processamento de Comandos (compartilhada) ---
             processCommand(command) {
                 let response = '';
                 const normalizedCommand = this.normalizeText(command);
-                const now = new Date();
-                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
 
-                // Comandos gerais
-                if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || 
-                    normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || 
-                    normalizedCommand.includes('boa noite')) {
+                // --- Comandos Gerais e Apresentação do Bloquito ---
+                if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || normalizedCommand.includes('boa noite')) {
                     response = 'Olá! Como posso te ajudar?';
-                } 
-                else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || 
-                         normalizedCommand.includes('voce esta bem')) {
-                    response = 'Estou bem, obrigado! E você?';
-                } 
-                else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || 
-                         normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome')) {
-                    response = 'Eu sou o Bloquito, seu assistente de voz especializado em kits educacionais da Asthor Barden!';
-                } 
-                else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
-                    response = `Agora são ${timeString}.`;
-                } 
-                else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
-                    response = 'Parando o reconhecimento. Até mais!';
-                    this.stopListening();
+                } else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || normalizedCommand.includes('voce esta bem')) {
+                    response = 'Estou bem, obrigado! E você, como está?';
+                } else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome') || normalizedCommand.includes('apresente se')) {
+                    response = 'Olá! Eu sou o Bloquito, seu assistente virtual especializado nos kits Bloco+ e STEAMAKER, desenvolvidos pela Asthor Barden. Minha missão é ajudar você a explorar nossos kits de eletrônica pedagógica, projetados para facilitar o ensino e a prática de robótica, automação e eletrônica básica. Estou aqui para esclarecer dúvidas, orientar projetos e fichas educativas e garantir que você aproveite ao máximo esses recursos incríveis, sempre utilizando as informações oficiais disponíveis no site blocomais.com.br e nos arquivos de treinamento fornecidos.';
+                } else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
+                    const now = new Date();
+                    response = `Agora são ${now.getHours()} horas e ${now.getMinutes().toString().padStart(2, '0')} minutos.`;
+                } else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
+                    response = 'Parando o reconhecimento de voz. Até mais!';
+                    this.stopListeningContinuous(); // Assegura que o contínuo pare
+                    this.stopRecording(); // Assegura que a gravação pare
                 }
-                // Perguntas específicas
-                else if (normalizedCommand.includes('o que e bloco mais') || 
-                         normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica com componentes em blocos, facilitando conexões físicas. Focado em robótica, automação e eletrônica básica.';
-                } 
-                else if (normalizedCommand.includes('o que e steamaker')) {
-                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade.';
-                } 
-                else if (normalizedCommand.includes('bloco mais bot')) {
-                    response = 'O Bloco+Bot é o microcontrolador central do kit, com ESP32, sensores e capacidade de controlar motores e LEDs.';
-                } 
-                else if (normalizedCommand.includes('corellaser')) {
-                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden.';
+                // --- Perguntas Específicas sobre Bloco+ e Asthor Barden ---
+                else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('o que e blocomais') || normalizedCommand.includes('fale sobre o bloco mais')) {
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
+                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
+                    response = 'O STEAMAKER é um kit semelhante ao Bloco+, também da Asthor Barden, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
+                } else if (normalizedCommand.includes('bloco mais bot') || normalizedCommand.includes('bloco+ bot') || normalizedCommand.includes('o que e bloco mais bot') || normalizedCommand.includes('esp32 bloco mais')) {
+                    response = 'O Bloco+Bot é o microcontrolador central do Bloco+, ele vem com um ESP32 integrado, acelerômetro, giroscópio, sensor de temperatura, e tem capacidade de controlar dois motores DC, LEDs e um buzzer. É o cérebro do sistema!';
+                } else if (normalizedCommand.includes('quais sao os componentes do bloco mais') || normalizedCommand.includes('componentes bloco mais') || normalizedCommand.includes('modulos bloco mais') || normalizedCommand.includes('pecas bloco mais')) {
+                    response = 'O kit Bloco+ inclui o Bloco+Bot, módulos de conexão (vermelho e preto), módulos de resistores (H e L), módulo press switch, módulo power (alimentação 5V), módulo LEDs com cinco cores, módulos de capacitores (C e E), módulo Oscilador, módulo amplificador, módulo PIC com programas pré-definidos, módulo chipcorder para gravação/reprodução de sons. Também possui outros como NPN, PNP, SCR, potenciômetro, speaker, piezo, sensores infravermelros, motores DC, servo motores e cabos de conexão.';
+                } else if (normalizedCommand.includes('como instalar arduino') || normalizedCommand.includes('instalacao arduino') || normalizedCommand.includes('arduino para bloco mais')) {
+                    response = 'A instalação do ambiente de programação do Bloco+ Bot envolve quatro partes: uma modificação do software Arduino IDE com Ardublock, a instalação de um driver de comunicação para o ESP32, um arquivo de configuração para o Arduino IDE reconhecer o ESP32, e a instalação da biblioteca ESP32Servo. Você pode encontrar os passos detalhados no documento de "Instruções de instalação do Arduino".';
+                } else if (normalizedCommand.includes('mapa de portas') || normalizedCommand.includes('portas bloco mais bot') || normalizedCommand.includes('conexoes bloco mais bot')) {
+                    response = 'O Bloco+ Bot possui portas internas como D14, D13, D23, D19 (para Ponte H e LEDs), D12 (Buzzer ativo), D2 (LED D2). E portas externas como Vin, GND, 3V3, várias portas digitais (D15 a D25), portas analógicas (A0 a A7), e saídas para pontes H (MA, MB). O detalhamento completo está no documento "Mapa de portas Bloco+ Bot".';
+                } else if (normalizedCommand.includes('corellaser') || normalizedCommand.includes('maquina de corte laser') || normalizedCommand.includes('corel laser')) {
+                    response = 'O CorelLASER é um programa de controle para máquina de corte a laser. Para sua instalação, é necessário primeiro instalar o CorelDRAW 12. As instruções detalhadas estão no documento "Instruções de instalação do CorelLASER". No contexto da Asthor Barden, ele é usado em conjunto com os kits para produção de peças e projetos educacionais.';
+                } else if (normalizedCommand.includes('fichas asthor') || normalizedCommand.includes('guia de referencia') || normalizedCommand.includes('fichas pedagogicas')) {
+                    response = 'O "Guia de Referência Fichas Asthor" é um material orientativo para professores, que apresenta as Fichas de Atividades e instruções de uso. Ele alinha a pedagogia da Asthor Barden com a Base Nacional Comum Curricular (BNCC), focando em metodologias ativas como a Aprendizagem Baseada em Projetos (ABP), e incentivando o desenvolvimento de competências gerais e habilidades essenciais para os alunos. As fichas são matrizes para criação de novas práticas e abrangem áreas STEAM.';
+                } else if (normalizedCommand.includes('o que e asthor barden') || normalizedCommand.includes('astor barden')) {
+                    response = 'Asthor Barden é a empresa responsável pelo desenvolvimento dos kits Bloco+ e STEAMAKER, focados em eletrônica pedagógica e tecnologias como robótica e automação, para auxiliar no ensino e aprendizado.';
                 }
-                // Fallback
+                // --- Fallback Inteligente (com palavras-chave) ---
+                else if (normalizedCommand.includes('bloco mais') || normalizedCommand.includes('blocomais') || normalizedCommand.includes('asthor barden') || normalizedCommand.includes('astor barden') || normalizedCommand.includes('steamak') || normalizedCommand.includes('kit') || normalizedCommand.includes('bot') || normalizedCommand.includes('eletronica') || normalizedCommand.includes('robotica') || normalizedCommand.includes('pedagogico') || normalizedCommand.includes('projeto') || normalizedCommand.includes('curso') || normalizedCommand.includes('arduino') || normalizedCommand.includes('laser') || normalizedCommand.includes('corel') || normalizedCommand.includes('maquina') || normalizedCommand.includes('quebrar') || normalizedCommand.includes('manutencao')) {
+                    let extractedPhrase = command;
+                    const keywords = ['bloco mais', 'blocomais', 'asthor barden', 'astor barden', 'steamak', 'kit', 'bot', 'eletronica', 'robotica', 'pedagogico', 'projeto', 'curso', 'arduino', 'laser', 'corel', 'maquina', 'quebrar', 'manutencao'];
+                    let foundKeyword = false;
+                    for (const keyword of keywords) {
+                        if (normalizedCommand.includes(keyword)) {
+                            const index = normalizedCommand.indexOf(keyword);
+                            extractedPhrase = command.substring(Math.max(0, index - 15), Math.min(command.length, index + keyword.length + 25)).trim();
+                            if (extractedPhrase.length > 60) {
+                                extractedPhrase = extractedPhrase.substring(0, 57) + '...';
+                            }
+                            foundKeyword = true;
+                            break;
+                        }
+                    }
+                    if (!foundKeyword && command.length > 60) {
+                        extractedPhrase = command.substring(0, 57) + '...';
+                    }
+
+                    response = `Não sei responder sobre "${extractedPhrase}". Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor Barden. Se a informação não estiver lá, não consigo responder. Recomendo que você entre em contato diretamente com o suporte oficial através da página de contato do site.`;
+                }
+                // --- Fallback Geral ---
                 else {
-                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden?';
+                    response = 'Desculpe, não entendi esse comando. Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor Barden. Se a informação não estiver lá, não consigo responder. Posso ajudar com outras perguntas sobre os kits?';
                 }
 
                 if (response) {
-                    setTimeout(() => {
-                        this.addMessage(`Bloquito: ${response}`, 'bot');
-                        this.speak(response);
-                    }, 500);
+                    this.addMessage(`Bloquito: ${response}`, 'bot');
+                    this.speak(response);
                 }
             }
             
@@ -661,74 +638,57 @@
                 return text
                     .toLowerCase()
                     .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^\w\s]/gi, '');
+                    .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
             }
             
             speak(text) {
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'pt-BR';
-                    utterance.rate = 0.9;
-                    
-                    // Para o reconhecimento durante a fala
+                    utterance.rate = 0.9; 
+
+                    // Para o reconhecimento contínuo se estiver ativo antes de falar
                     if (this.recognition && this.isListening) {
-                        this.recognition.stop();
+                        this.recognition.stop(); 
                     }
-                    
+                    // Para a gravação do MediaRecorder se estiver ativa antes de falar
+                    if (this.mediaRecorder && this.isRecording) {
+                        this.mediaRecorder.stop();
+                    }
+
                     utterance.onend = () => {
-                        // Reinicia o reconhecimento se o usuário ainda estiver ativo
-                        if (this.recognitionActiveByUser) {
-                            setTimeout(() => {
-                                if (this.recognitionActiveByUser) {
-                                    this.startListening();
-                                }
-                            }, 300);
-                        }
+                        // Se o reconhecimento contínuo estava ativo, ele será reiniciado pelo onEnd dele.
+                        // Se era o modo "Segurar para Falar", ele já parou e está pronto para o próximo comando.
                     };
-                    
+
+                    utterance.onerror = (event) => {
+                        console.error('Erro na síntese de fala:', event.error);
+                    };
+
                     speechSynthesis.speak(utterance);
+                } else {
+                    console.warn('Síntese de fala não suportada neste navegador.');
                 }
             }
             
-            updateStatus(message, state) {
-                this.statusText.textContent = message;
-                
-                if (state === 'listening') {
-                    this.statusIndicator.className = 'status-indicator listening';
-                } else if (state === 'error') {
-                    this.statusIndicator.style.backgroundColor = '#FF9800';
-                    this.statusIndicator.style.animation = 'none';
-                } else {
-                    this.statusIndicator.className = 'status-indicator';
-                    this.statusIndicator.style.backgroundColor = '#f44336';
-                }
+            updateStatus(message, className) {
+                this.statusEl.textContent = message;
+                this.statusEl.className = `status ${className}`;
             }
             
             addMessage(message, type) {
-                const now = new Date();
-                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-                
                 const messageEl = document.createElement('div');
                 messageEl.className = `message ${type}-message`;
-                messageEl.innerHTML = `
-                    ${message}
-                    <div class="message-time">${timeString}</div>
-                `;
+                messageEl.textContent = message;
                 
                 this.conversationEl.appendChild(messageEl);
-                this.conversationEl.scrollTop = this.conversationEl.scrollHeight;
+                this.conversationEl.scrollTop = this.conversationEl.scrollHeight; // Rola para o final
             }
         }
         
         // Inicializa o assistente quando a página carrega
         document.addEventListener('DOMContentLoaded', () => {
-            const assistant = new VoiceAssistant();
-            
-            // Adiciona mensagem de boas-vindas após um breve delay
-            setTimeout(() => {
-                assistant.addMessage('Bloquito: Estou pronto para ajudar! Faça uma pergunta sobre nossos produtos.', 'bot');
-            }, 1000);
+            new VoiceAssistant();
         });
     </script>
 </body>
