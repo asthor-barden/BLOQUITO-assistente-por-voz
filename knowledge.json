@@ -2,7 +2,7 @@
   "greetings": {
     "keywords": ["oi", "ola", "bom dia", "boa tarde", "boa noite", "hey", "e ai"],
     "response": "Olá{userName}! Como posso ajudá-lo hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Barden.",
-    "speech": "Olá{userName}! Como posso ajudar você hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Bardem."
+    "speech": "Oi {userName}! Como posso ajudar você hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Bardem."
   },
   "wellbeing": {
     "keywords": ["tudo bem", "como vai", "voce esta bem", "como voce esta", "como esta"],
