@@ -258,8 +258,8 @@
                 <li>"Quem é você?", "Como é seu nome?", "Fale sobre você"</li>
                 <li>"Que horas são?"</li>
                 <li>"Parar"</li>
-                <li>"O que é Bloco+?", "O que é Asthor bardem?"</li>
-                <li>"O que é esteam makerm?"</li>
+                <li>"O que é Bloco+?", "O que é Asthor Barden?"</li>
+                <li>"O que é STEAMAKER?"</li>
                 <li>"O que é Bloco+ Bot?"</li>
                 <li>"Quais são os componentes do Bloco+?"</li>
                 <li>"Como instalar Arduino para Bloco+?"</li>
@@ -271,7 +271,7 @@
         
         <div class="conversation" id="conversation">
             <div class="message bot-message">
-                Olá! Eu sou o Bloquito. Clique em "Iniciar Reconhecimento" para começarmos a conversar sobre os kits Bloco+ e esteam makerm!
+                Olá! Eu sou o Bloquito. Por favor, permita o acesso ao microfone. Para começarmos a conversar, clique em "Iniciar Reconhecimento".
             </div>
         </div>
     </div>
@@ -291,7 +291,7 @@
                 this.initializeElements();
                 this.setupSpeechRecognition();
                 this.setupEventListeners();
-                this.setupAudioMonitoring();
+                this.setupAudioMonitoring(); // Chamado no construtor para pedir permissão ao carregar
             }
             
             initializeElements() {
@@ -317,8 +317,12 @@
                     // this.analyser.connect(this.audioContext.destination); // No longer needed
                     this.monitorAudio();
                 } catch (error) {
-                    console.error('Erro ao acessar microfone:', error);
-                    this.addMessage('Erro ao acessar microfone. Verifique as permissões do navegador.', 'bot');
+                    console.error('Erro ao acessar microfone para monitoramento:', error);
+                    let errorMessage = 'Erro ao acessar microfone para monitoramento. Verifique as permissões do navegador.';
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso ao microfone nas configurações do seu navegador.';
+                    }
+                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
                 }
             }
             
@@ -340,7 +344,7 @@
             
             setupSpeechRecognition() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    this.addMessage('Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge para melhor experiência.', 'bot');
+                    this.addMessage('Bloquito: Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge para melhor experiência.', 'bot');
                     return;
                 }
                 
@@ -371,23 +375,30 @@
             
             startListening() {
                 if (!this.recognition) return;
-                this.recognitionActiveByUser = true;
+                this.recognitionActiveByUser = true; // Define que o usuário quer o reconhecimento ativo
                 try {
                     this.recognition.start();
+                    // A caixa de diálogo de permissão para SpeechRecognition pode aparecer aqui pela primeira vez
+                    // em alguns navegadores/sistemas operacionais, mesmo que o monitoramento de áudio já tenha permissão.
                 } catch (error) {
                     console.error('Erro ao iniciar reconhecimento:', error);
-                    // Pode ser que já esteja ativo, ou permissão negada, etc.
                     if (error.name === 'InvalidStateError') {
-                         this.addMessage('Reconhecimento já está ativo ou não pode ser iniciado agora.', 'bot');
+                         this.addMessage('Bloquito: O reconhecimento já está ativo ou houve um problema ao tentar iniciá-lo. Tente parar e iniciar novamente.', 'bot');
                     } else if (error.name === 'NotAllowedError') {
-                        this.addMessage('Permissão de microfone negada. Por favor, permita o acesso ao microfone.', 'bot');
+                        this.addMessage('Bloquito: A permissão de microfone para reconhecimento de fala foi negada. Por favor, verifique as configurações do seu navegador e tente novamente.', 'bot');
+                    } else {
+                         this.addMessage(`Bloquito: Não foi possível iniciar o reconhecimento: ${error.message}.`, 'bot');
                     }
+                    this.recognitionActiveByUser = false; // Reverte se falhou ao iniciar
+                    this.updateStatus('Não está ouvindo', 'not-listening');
+                    this.startBtn.disabled = false;
+                    this.stopBtn.disabled = true;
                 }
             }
             
             stopListening() {
                 if (this.recognition) {
-                    this.recognitionActiveByUser = false;
+                    this.recognitionActiveByUser = false; // Define que o usuário NÃO quer mais o reconhecimento ativo
                     this.recognition.stop();
                 }
             }
@@ -413,9 +424,13 @@
                 finalTranscript = finalTranscript.trim();
 
                 // Processa apenas se houver transcrição e confiança razoável
-                if (finalTranscript.length > 0 && confidence > 0.4) { // Aumentei a confiança mínima para evitar ruídos
+                // Aumentei a confiança mínima para evitar ruídos ou "não-falas"
+                if (finalTranscript.length > 0 && confidence > 0.5) { 
                     this.addMessage(`Você: ${finalTranscript}`, 'user');
                     this.processCommand(finalTranscript.toLowerCase());
+                } else if (finalTranscript.length > 0 && confidence <= 0.5) {
+                    // Se houver algum som mas a confiança for muito baixa, ignora para evitar "não entendi" desnecessário
+                    console.log(`Bloquito: Ignorando entrada de baixa confiança: "${finalTranscript}" (Confiança: ${confidence.toFixed(2)})`);
                 }
             }
             
@@ -429,7 +444,7 @@
                             errorMessage = 'Erro ao capturar áudio do microfone.';
                             break;
                         case 'not-allowed':
-                            errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso.';
+                            errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso nas configurações do navegador.';
                             break;
                         case 'network':
                             errorMessage = 'Erro de rede. Verifique sua conexão.';
@@ -468,7 +483,7 @@
                 } else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || normalizedCommand.includes('voce esta bem')) {
                     response = 'Estou bem, obrigado! E você, como está?';
                 } else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome') || normalizedCommand.includes('apresente se')) {
-                    response = 'Olá! Eu sou o Bloquito, seu assistente virtual especializado nos kits Bloco+ e esteam makerm, desenvolvidos pela Asthor Bardem. Minha missão é ajudar você a explorar nossos kits de eletrônica pedagógica, projetados para facilitar o ensino e a prática de robótica, automação e eletrônica básica. Estou aqui para esclarecer dúvidas, orientar projetos e fichas educativas e garantir que você aproveite ao máximo esses recursos incríveis, sempre utilizando as informações oficiais disponíveis no site blocomais.com.br e nos arquivos de treinamento fornecidos.';
+                    response = 'Olá! Eu sou o Bloquito, seu assistente virtual especializado nos kits Bloco+ e STEAMAKER, desenvolvidos pela Asthor Barden. Minha missão é ajudar você a explorar nossos kits de eletrônica pedagógica, projetados para facilitar o ensino e a prática de robótica, automação e eletrônica básica. Estou aqui para esclarecer dúvidas, orientar projetos e fichas educativas e garantir que você aproveite ao máximo esses recursos incríveis, sempre utilizando as informações oficiais disponíveis no site blocomais.com.br e nos arquivos de treinamento fornecidos.';
                 } else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
                     const now = new Date();
                     response = `Agora são ${now.getHours()} horas e ${now.getMinutes().toString().padStart(2, '0')} minutos.`;
@@ -476,11 +491,11 @@
                     response = 'Parando o reconhecimento de voz. Até mais!';
                     this.stopListening();
                 }
-                // --- Perguntas Específicas sobre Bloco+ e Asthor bardem ---
+                // --- Perguntas Específicas sobre Bloco+ e Asthor Barden ---
                 else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('o que e blocomais') || normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor bardem, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
-                } else if (normalizedCommand.includes('o que e esteam makerm') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o esteam makerm')) {
-                    response = 'O esteam makerm é um kit semelhante ao Bloco+, também da Asthor bardem, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
+                } else if (normalizedCommand.includes('o que e steamaker') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o steamaker')) {
+                    response = 'O STEAMAKER é um kit semelhante ao Bloco+, também da Asthor Barden, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
                 } else if (normalizedCommand.includes('bloco mais bot') || normalizedCommand.includes('bloco+ bot') || normalizedCommand.includes('o que e bloco mais bot') || normalizedCommand.includes('esp32 bloco mais')) {
                     response = 'O Bloco+Bot é o microcontrolador central do Bloco+, ele vem com um ESP32 integrado, acelerômetro, giroscópio, sensor de temperatura, e tem capacidade de controlar dois motores DC, LEDs e um buzzer. É o cérebro do sistema!';
                 } else if (normalizedCommand.includes('quais sao os componentes do bloco mais') || normalizedCommand.includes('componentes bloco mais') || normalizedCommand.includes('modulos bloco mais') || normalizedCommand.includes('pecas bloco mais')) {
@@ -490,39 +505,39 @@
                 } else if (normalizedCommand.includes('mapa de portas') || normalizedCommand.includes('portas bloco mais bot') || normalizedCommand.includes('conexoes bloco mais bot')) {
                     response = 'O Bloco+ Bot possui portas internas como D14, D13, D23, D19 (para Ponte H e LEDs), D12 (Buzzer ativo), D2 (LED D2). E portas externas como Vin, GND, 3V3, várias portas digitais (D15 a D25), portas analógicas (A0 a A7), e saídas para pontes H (MA, MB). O detalhamento completo está no documento "Mapa de portas Bloco+ Bot".';
                 } else if (normalizedCommand.includes('corellaser') || normalizedCommand.includes('maquina de corte laser') || normalizedCommand.includes('corel laser')) {
-                    response = 'O CorelLASER é um programa de controle para máquina de corte a laser. Para sua instalação, é necessário primeiro instalar o CorelDRAW 12. As instruções detalhadas estão no documento "Instruções de instalação do CorelLASER". No contexto da Asthor bardem, ele é usado em conjunto com os kits para produção de peças e projetos educacionais.';
+                    response = 'O CorelLASER é um programa de controle para máquina de corte a laser. Para sua instalação, é necessário primeiro instalar o CorelDRAW 12. As instruções detalhadas estão no documento "Instruções de instalação do CorelLASER". No contexto da Asthor Barden, ele é usado em conjunto com os kits para produção de peças e projetos educacionais.';
                 } else if (normalizedCommand.includes('fichas asthor') || normalizedCommand.includes('guia de referencia') || normalizedCommand.includes('fichas pedagogicas')) {
-                    response = 'O "Guia de Referência Fichas Asthor" é um material orientativo para professores, que apresenta as Fichas de Atividades e instruções de uso. Ele alinha a pedagogia da Asthor bardem com a Base Nacional Comum Curricular (BNCC), focando em metodologias ativas como a Aprendizagem Baseada em Projetos (ABP), e incentivando o desenvolvimento de competências gerais e habilidades essenciais para os alunos. As fichas são matrizes para criação de novas práticas e abrangem áreas STEAM.';
-                } else if (normalizedCommand.includes('o que e asthor bardem') || normalizedCommand.includes('astor bardem')) {
-                    response = 'Asthor bardem é a empresa responsável pelo desenvolvimento dos kits Bloco+ e esteam makerm, focados em eletrônica pedagógica e tecnologias como robótica e automação, para auxiliar no ensino e aprendizado.';
+                    response = 'O "Guia de Referência Fichas Asthor" é um material orientativo para professores, que apresenta as Fichas de Atividades e instruções de uso. Ele alinha a pedagogia da Asthor Barden com a Base Nacional Comum Curricular (BNCC), focando em metodologias ativas como a Aprendizagem Baseada em Projetos (ABP), e incentivando o desenvolvimento de competências gerais e habilidades essenciais para os alunos. As fichas são matrizes para criação de novas práticas e abrangem áreas STEAM.';
+                } else if (normalizedCommand.includes('o que e asthor barden') || normalizedCommand.includes('astor barden')) {
+                    response = 'Asthor Barden é a empresa responsável pelo desenvolvimento dos kits Bloco+ e STEAMAKER, focados em eletrônica pedagógica e tecnologias como robótica e automação, para auxiliar no ensino e aprendizado.';
                 }
                 // --- Fallback Inteligente (com palavras-chave) ---
-                else if (normalizedCommand.includes('bloco mais') || normalizedCommand.includes('blocomais') || normalizedCommand.includes('asthor bardem') || normalizedCommand.includes('astor bardem') || normalizedCommand.includes('steamak') || normalizedCommand.includes('kit') || normalizedCommand.includes('bot') || normalizedCommand.includes('eletronica') || normalizedCommand.includes('robotica') || normalizedCommand.includes('pedagogico') || normalizedCommand.includes('projeto') || normalizedCommand.includes('curso')) {
+                else if (normalizedCommand.includes('bloco mais') || normalizedCommand.includes('blocomais') || normalizedCommand.includes('asthor barden') || normalizedCommand.includes('astor barden') || normalizedCommand.includes('steamak') || normalizedCommand.includes('kit') || normalizedCommand.includes('bot') || normalizedCommand.includes('eletronica') || normalizedCommand.includes('robotica') || normalizedCommand.includes('pedagogico') || normalizedCommand.includes('projeto') || normalizedCommand.includes('curso') || normalizedCommand.includes('arduino') || normalizedCommand.includes('laser') || normalizedCommand.includes('corel') || normalizedCommand.includes('maquina') || normalizedCommand.includes('quebrar') || normalizedCommand.includes('manutencao')) {
                     let extractedPhrase = command;
                     // Tenta extrair uma parte relevante da frase do usuário
-                    const keywords = ['bloco mais', 'blocomais', 'asthor bardem', 'astor bardem', 'steamak', 'kit', 'bot', 'eletronica', 'robotica', 'pedagogico', 'projeto', 'curso', 'arduino', 'laser', 'corel'];
+                    const keywords = ['bloco mais', 'blocomais', 'asthor barden', 'astor barden', 'steamak', 'kit', 'bot', 'eletronica', 'robotica', 'pedagogico', 'projeto', 'curso', 'arduino', 'laser', 'corel', 'maquina', 'quebrar', 'manutencao'];
                     let foundKeyword = false;
                     for (const keyword of keywords) {
                         if (normalizedCommand.includes(keyword)) {
                             const index = normalizedCommand.indexOf(keyword);
                             // Pega a frase ao redor da palavra-chave
-                            extractedPhrase = command.substring(Math.max(0, index - 10), Math.min(command.length, index + keyword.length + 20)).trim();
-                            if (extractedPhrase.length > 50) { // Limita o tamanho para não ficar muito longo
-                                extractedPhrase = extractedPhrase.substring(0, 47) + '...';
+                            extractedPhrase = command.substring(Math.max(0, index - 15), Math.min(command.length, index + keyword.length + 25)).trim();
+                            if (extractedPhrase.length > 60) { // Limita o tamanho para não ficar muito longo
+                                extractedPhrase = extractedPhrase.substring(0, 57) + '...';
                             }
                             foundKeyword = true;
                             break;
                         }
                     }
-                    if (!foundKeyword && command.length > 50) {
-                        extractedPhrase = command.substring(0, 47) + '...';
+                    if (!foundKeyword && command.length > 60) {
+                        extractedPhrase = command.substring(0, 57) + '...';
                     }
 
-                    response = `Não sei responder sobre "${extractedPhrase}". Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor bardem. Se a informação não estiver lá, não consigo responder. Recomendo que você entre em contato diretamente com o suporte oficial através da página de contato do site.`;
+                    response = `Não sei responder sobre "${extractedPhrase}". Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor Barden. Se a informação não estiver lá, não consigo responder. Recomendo que você entre em contato diretamente com o suporte oficial através da página de contato do site.`;
                 }
                 // --- Fallback Geral ---
                 else {
-                    response = 'Desculpe, não entendi esse comando. Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor bardem. Se a informação não estiver lá, não consigo responder. Posso ajudar com outras perguntas sobre os kits?';
+                    response = 'Desculpe, não entendi esse comando. Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor Barden. Se a informação não estiver lá, não consigo responder. Posso ajudar com outras perguntas sobre os kits?';
                 }
 
                 if (response) {
@@ -544,33 +559,20 @@
                     utterance.lang = 'pt-BR';
                     utterance.rate = 0.9; // Velocidade da fala
 
-                    // Se o reconhecimento estiver ativo, pare-o antes de falar
+                    // Imediatamente para o reconhecimento antes de falar
                     if (this.recognition && this.isListening) {
-                        this.recognition.stop();
+                        this.recognition.stop(); // Isso irá disparar o evento onEnd
                     }
 
                     utterance.onend = () => {
-                        // Após a fala terminar, e se o usuário ainda quer que o reconhecimento esteja ativo, reinicie-o
-                        if (this.recognition && this.recognitionActiveByUser) {
-                            // Pequeno atraso para garantir que a fala terminou completamente e o microfone está livre
-                            setTimeout(() => {
-                                if (this.recognitionActiveByUser) { // Verifica novamente após o atraso
-                                    this.recognition.start();
-                                }
-                            }, 300); // 300ms de atraso
-                        }
+                        // O método onEnd já contém a lógica para reiniciar o reconhecimento
+                        // se recognitionActiveByUser for true, então não precisamos chamar start() aqui.
                     };
 
                     utterance.onerror = (event) => {
                         console.error('Erro na síntese de fala:', event.error);
-                        // Mesmo com erro, tente reiniciar o reconhecimento se o usuário deseja
-                        if (this.recognition && this.recognitionActiveByUser) {
-                             setTimeout(() => {
-                                if (this.recognitionActiveByUser) {
-                                    this.recognition.start();
-                                }
-                            }, 300);
-                        }
+                        // Em caso de erro na fala, onEnd já teria sido disparado pelo stop()
+                        // e tentaria reiniciar o reconhecimento.
                     };
 
                     speechSynthesis.speak(utterance);
