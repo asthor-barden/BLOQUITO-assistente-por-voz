@@ -864,61 +864,8 @@
     </div>
 
     <script>
-        // Base de conhecimento externa (JSON)
-        const knowledgeBase = {
-            "greetings": {
-                "keywords": ["oi", "ola", "bom dia", "boa tarde", "boa noite", "hey", "e ai"],
-                "response": "Olá{userName}! Como posso ajudá-lo hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Barden."
-            },
-            "wellbeing": {
-                "keywords": ["tudo bem", "como vai", "voce esta bem", "como voce esta", "como esta"],
-                "response": "Estou muito bem, obrigado{userName}! Funcionando perfeitamente e pronto para ajudar. E você, como está?"
-            },
-            "identity": {
-                "keywords": ["quem e voce", "como e seu nome", "fale sobre voce", "se apresente", "quem voce e"],
-                "response": "Eu sou o Bloquito{userName}! Sou seu assistente inteligente especializado em produtos da Asthor Barden. Posso ajudar com informações sobre Bloco+, STEAMAKER, CorelLASER e muito mais."
-            },
-            "time": {
-                "keywords": ["que horas", "horas sao", "horario"],
-                "response": "Agora são {time}{userName}."
-            },
-            "stop": {
-                "keywords": ["parar", "pare", "finalizar", "sair", "tchau", "ate logo", "ate mais", "adeus"],
-                "response": "Entendido{userName}! {stopAction}",
-                "action": "stop_voice"
-            },
-            "bloco_plus": {
-                "keywords": ["o que e bloco mais", "fale sobre o bloco mais", "bloco+", "bloco mais", "kit bloco"],
-                "response": "O Bloco+ é um kit de eletrônica pedagógica inovador da Asthor Barden{userName}. Os componentes estão organizados em blocos modulares que facilitam as conexões físicas, sendo perfeito para ensinar robótica, automação e eletrônica básica de forma prática e divertida."
-            },
-            "steamaker": {
-                "keywords": ["o que e steamaker", "fale sobre steamaker", "steamaker", "steam maker"],
-                "response": "O STEAMAKER é outro kit fantástico da Asthor Barden{userName}. Similar ao Bloco+, mas com componentes organizados em módulos que oferecem ainda maior flexibilidade para diferentes tipos de montagem. É ideal para projetos STEAM mais avançados."
-            },
-            "bloco_bot": {
-                "keywords": ["bloco mais bot", "blocobot", "bloco+ bot", "esp32", "microcontrolador"],
-                "response": "O Bloco+Bot é o cérebro do sistema{userName}! É um microcontrolador baseado em ESP32 com sensores integrados como acelerômetro, giroscópio e temperatura, além de ter capacidade para controlar motores DC, LEDs e buzzer. É realmente o coração de todos os projetos."
-            },
-            "corellaser": {
-                "keywords": ["corellaser", "fale sobre corellaser", "corel laser", "software laser", "corte laser"],
-                "response": "O CorelLASER é um software especializado para controle de máquinas de corte a laser{userName}. É usado em conjunto com os kits da Asthor Barden para criar peças personalizadas e projetos educacionais incríveis. Perfeito para makers e educadores."
-            },
-            "asthor_barden": {
-                "keywords": ["asthor barden", "empresa", "fabricante", "quem faz"],
-                "response": "A Asthor Barden é a empresa inovadora por trás de todos esses produtos{userName}! Eles são especialistas em eletrônica pedagógica e tecnologias educacionais, sempre focando em tornar o aprendizado mais prático e envolvente."
-            },
-            "help": {
-                "keywords": ["ajuda", "help", "comandos", "o que voce faz", "como usar"],
-                "response": "Posso ajudá-lo com informações sobre:\n\nBloco+ e seus componentes\nSTEAMAKER\nBloco+Bot (ESP32)\nCorelLASER\nAsthor Barden\n\nTambém posso conversar sobre outros assuntos{userName}! Use o microfone para falar comigo ou digite suas perguntas."
-            },
-            "thanks": {
-                "keywords": ["obrigado", "obrigada", "valeu", "muito obrigado", "agradeco"],
-                "response": "Por nada{userName}! Fico feliz em ajudar. Se tiver mais alguma dúvida, estarei aqui."
-            },
-            "default": {
-                "response": "Não tenho informações específicas sobre isso{userName}. Posso ajudá-lo com questões sobre Bloco+, STEAMAKER, CorelLASER ou outros produtos da Asthor Barden. Que tal reformular sua pergunta ou me contar mais sobre o que gostaria de saber?"
-            }
-        };
+        // Base de conhecimento será carregada do arquivo externo
+        let knowledgeBase = null;
 
         class BloquitoAssistant {
             constructor() {
@@ -935,17 +882,80 @@
                 this.sidebarVisible = true;
                 
                 this.initializeElements();
-                this.setupVoiceRecognition();
-                this.setupEventListeners();
-                this.loadVoices();
-                
-                if (this.userName === null) {
-                    this.showWelcomeModal();
-                } else {
-                    this.hideWelcomeModal();
-                    this.updateUserDisplay();
-                    this.createNewChat();
+                this.loadKnowledgeBase(); // Carrega o JSON primeiro
+            }
+            
+            // Função para carregar a base de conhecimento
+            async loadKnowledgeBase() {
+                try {
+                    const response = await fetch('./knowledge.json');
+                    knowledgeBase = await response.json();
+                    console.log('Base de conhecimento carregada!');
+                    
+                    // Inicializa o resto da aplicação após carregar o JSON
+                    this.setupVoiceRecognition();
+                    this.setupEventListeners();
+                    this.loadVoices();
+                    
+                    if (this.userName === null) {
+                        this.showWelcomeModal();
+                    } else {
+                        this.hideWelcomeModal();
+                        this.updateUserDisplay();
+                        this.createNewChat();
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar base de conhecimento:', error);
+                    
+                    // Fallback - usa base mínima se falhar
+                    knowledgeBase = {
+                        "default": {
+                            "response": "Desculpe, houve um erro ao carregar minha base de conhecimento. Algumas funcionalidades podem estar limitadas."
+                        }
+                    };
+                    
+                    // Inicializa mesmo com erro
+                    this.setupVoiceRecognition();
+                    this.setupEventListeners();
+                    this.loadVoices();
+                    
+                    if (this.userName === null) {
+                        this.showWelcomeModal();
+                    } else {
+                        this.hideWelcomeModal();
+                        this.updateUserDisplay();
+                        this.createNewChat();
+                    }
                 }
+            }
+            
+            // Função modificada para verificar se a base foi carregada
+            findResponse(command) {
+                if (!knowledgeBase) {
+                    return {
+                        response: "Base de conhecimento ainda não foi carregada. Aguarde um momento."
+                    };
+                }
+                
+                const normalizedCommand = this.normalizeText(command);
+                
+                // Procura por correspondências nas palavras-chave
+                for (const [key, data] of Object.entries(knowledgeBase)) {
+                    if (key === 'default') continue;
+                    
+                    const keywords = data.keywords || [];
+                    for (const keyword of keywords) {
+                        if (normalizedCommand.includes(this.normalizeText(keyword))) {
+                            return data;
+                        }
+                    }
+                }
+                
+                // Retorna resposta padrão se não encontrar correspondência
+                return knowledgeBase.default || {
+                    response: "Não consegui processar sua solicitação."
+                };
             }
             
             initializeElements() {
