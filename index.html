@@ -1,805 +1,21 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloquito - Reconhecimento de Voz Real</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #2c7744 0%, #1e5631 100%);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.12);
-            padding: 25px;
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        h1 {
-            color: #fff;
-            font-size: 26px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-            margin-bottom: 5px;
-        }
-        
-        .subtitle {
-            color: #FFD700;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .engine-info {
-            background: rgba(76, 175, 80, 0.2);
-            padding: 12px;
-            border-radius: 10px;
-            margin: 15px 0;
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            text-align: center;
-            font-size: 13px;
-        }
-        
-        .engine-info.warning {
-            background: rgba(255, 152, 0, 0.2);
-            border-color: rgba(255, 152, 0, 0.3);
-        }
-        
-        .engine-info.error {
-            background: rgba(244, 67, 54, 0.2);
-            border-color: rgba(244, 67, 54, 0.3);
-        }
-        
-        .status-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .status-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #f44336;
-        }
-        
-        .status-indicator.listening {
-            background: #4CAF50;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .status-indicator.processing {
-            background: #FF9800;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .status-text {
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        .volume-container {
-            margin: 15px 0 25px;
-        }
-        
-        .volume-indicator {
-            width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            overflow: hidden;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-            margin-bottom: 8px;
-        }
-        
-        .volume-bar {
-            height: 100%;
-            background: #FFD700;
-            width: 0%;
-            transition: width 0.1s ease-out;
-            border-radius: 5px;
-        }
-        
-        .volume-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin: 20px 0;
-        }
-        
-        .btn {
-            background: #FFD700;
-            color: #333;
-            border: none;
-            padding: 16px;
-            font-size: 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .btn:hover {
-            background: #FFC107;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn:disabled {
-            background: rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.5);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn.talk {
-            background: #FF5722;
-            color: white;
-            padding: 20px;
-            font-size: 18px;
-        }
-        
-        .btn.talk:hover {
-            background: #E64A19;
-        }
-        
-        .btn.talk.recording {
-            background: #E64A19;
-            animation: pulse 1s infinite;
-        }
-        
-        .btn.talk i {
-            font-size: 24px;
-        }
-        
-        .conversation {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .message {
-            margin: 12px 0;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeInMessage 0.3s forwards;
-            position: relative;
-            max-width: 85%;
-        }
-
-        @keyframes fadeInMessage {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .user-message {
-            background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
-            margin-left: auto;
-            text-align: right;
-            border-bottom-right-radius: 5px;
-        }
-        
-        .bot-message {
-            background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-        }
-        
-        .message-time {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 5px;
-        }
-        
-        .confidence-indicator {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            font-size: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 10px;
-        }
-        
-        .commands {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 15px 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .commands h3 {
-            margin-top: 0;
-            color: #FFD700;
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .commands-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-        }
-        
-        .command-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .debug-info {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-            font-size: 12px;
-            font-family: monospace;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-        
-        /* Responsividade */
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px 15px;
-                border-radius: 15px;
-            }
-            
-            h1 {
-                font-size: 22px;
-            }
-            
-            .btn {
-                padding: 14px;
-                font-size: 15px;
-            }
-            
-            .btn.talk {
-                padding: 18px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎤 Bloquito</h1>
-            <div class="subtitle">Reconhecimento de Voz Real</div>
-        </div>
-        
-        <div class="engine-info" id="engineInfo">
-            <i class="fas fa-cog fa-spin"></i> Inicializando motor de reconhecimento...
-        </div>
-        
-        <div class="status-container">
-            <div class="status-indicator" id="statusIndicator"></div>
-            <div class="status-text" id="statusText">Inicializando...</div>
-        </div>
-        
-        <div class="volume-container">
-            <div class="volume-indicator">
-                <div class="volume-bar" id="volumeBar"></div>
-            </div>
-            <div class="volume-label">
-                <span>Baixo</span>
-                <span>Alto</span>
-            </div>
-        </div>
-        
-        <div class="controls">
-            <button class="btn" id="startBtn">
-                <i class="fas fa-play"></i> Iniciar Escuta Contínua
-            </button>
-            <button class="btn" id="stopBtn" disabled>
-                <i class="fas fa-stop"></i> Parar Escuta
-            </button>
-            <button class="btn talk" id="talkButton">
-                <i class="fas fa-microphone"></i> Pressionar e Falar
-            </button>
-        </div>
-
-        <div class="conversation" id="conversation"></div>
-        
-        <div class="commands">
-            <h3>Comandos Disponíveis</h3>
-            <div class="commands-grid">
-                <div class="command-item">Oi / Olá</div>
-                <div class="command-item">Como você está?</div>
-                <div class="command-item">Quem é você?</div>
-                <div class="command-item">Que horas são?</div>
-                <div class="command-item">O que é Bloco+?</div>
-                <div class="command-item">O que é STEAMAKER?</div>
-                <div class="command-item">Fale sobre CorelLASER</div>
-                <div class="command-item">Parar</div>
-            </div>
-        </div>
-        
-        <div class="debug-info" id="debugInfo"></div>
-    </div>
-
-    <script>
-        class RealVoiceRecognition {
-            constructor() {
-                this.recognition = null;
-                this.isListening = false;
-                this.continuousMode = false;
-                this.audioContext = null;
-                this.microphoneStream = null;
-                this.analyser = null;
-                this.dataArray = null;
-                this.lastResult = '';
-                this.recognitionEngine = 'unknown';
-                this.debugMode = true;
-                
-                this.initializeElements();
-                this.detectAndSetupRecognition();
-                this.setupAudioMonitoring();
-                this.setupEventListeners();
-            }
-            
-            initializeElements() {
-                this.statusIndicator = document.getElementById('statusIndicator');
-                this.statusText = document.getElementById('statusText');
-                this.startBtn = document.getElementById('startBtn');
-                this.stopBtn = document.getElementById('stopBtn');
-                this.talkButton = document.getElementById('talkButton');
-                this.conversationEl = document.getElementById('conversation');
-                this.volumeBar = document.getElementById('volumeBar');
-                this.engineInfo = document.getElementById('engineInfo');
-                this.debugInfo = document.getElementById('debugInfo');
-            }
-            
-            log(message) {
-                if (this.debugMode) {
-                    const time = new Date().toLocaleTimeString();
-                    this.debugInfo.innerHTML += `[${time}] ${message}<br>`;
-                    this.debugInfo.scrollTop = this.debugInfo.scrollHeight;
-                    console.log(`[Bloquito] ${message}`);
-                }
-            }
-            
-            async detectAndSetupRecognition() {
-                this.log('Detectando capacidades de reconhecimento...');
-                
-                // Tenta diferentes implementações
-                if ('webkitSpeechRecognition' in window) {
-                    this.recognitionEngine = 'webkit';
-                    this.log('Usando WebKit Speech Recognition');
-                } else if ('SpeechRecognition' in window) {
-                    this.recognitionEngine = 'standard';
-                    this.log('Usando Standard Speech Recognition');
-                } else {
-                    this.recognitionEngine = 'none';
-                    this.log('Nenhum motor de reconhecimento encontrado');
-                    this.showEngineError();
-                    return;
-                }
-                
-                await this.setupRecognition();
-            }
-            
-            async setupRecognition() {
-                try {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognition = new SpeechRecognition();
-                    
-                    // Configurações otimizadas para mobile
-                    this.recognition.continuous = false; // Mudança importante para mobile
-                    this.recognition.interimResults = true;
-                    this.recognition.lang = 'pt-BR';
-                    this.recognition.maxAlternatives = 3;
-                    
-                    // Configurações específicas para WebKit (Chrome/Safari mobile)
-                    if (this.recognitionEngine === 'webkit') {
-                        this.recognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize';
-                    }
-                    
-                    this.setupRecognitionEvents();
-                    this.showEngineSuccess();
-                    this.log('Motor de reconhecimento configurado com sucesso');
-                    
-                } catch (error) {
-                    this.log(`Erro ao configurar reconhecimento: ${error.message}`);
-                    this.showEngineError();
-                }
-            }
-            
-            setupRecognitionEvents() {
-                this.recognition.onstart = () => {
-                    this.log('Reconhecimento iniciado');
-                    this.isListening = true;
-                    this.updateStatus('🎤 Ouvindo...', 'listening');
-                    this.startBtn.disabled = true;
-                    this.stopBtn.disabled = false;
-                };
-                
-                this.recognition.onresult = (event) => {
-                    this.handleRecognitionResult(event);
-                };
-                
-                this.recognition.onerror = (event) => {
-                    this.log(`Erro de reconhecimento: ${event.error}`);
-                    this.handleRecognitionError(event);
-                };
-                
-                this.recognition.onend = () => {
-                    this.log('Reconhecimento finalizado');
-                    this.isListening = false;
-                    this.updateStatus('Não está ouvindo', 'not-listening');
-                    this.startBtn.disabled = false;
-                    this.stopBtn.disabled = true;
-                    
-                    // Reinicia automaticamente se estiver em modo contínuo
-                    if (this.continuousMode) {
-                        setTimeout(() => {
-                            if (this.continuousMode) {
-                                this.log('Reiniciando reconhecimento contínuo...');
-                                this.startRecognition();
-                            }
-                        }, 100); // Delay mínimo para evitar loops
-                    }
-                };
-                
-                this.recognition.onnomatch = () => {
-                    this.log('Nenhuma correspondência encontrada');
-                };
-                
-                this.recognition.onsoundstart = () => {
-                    this.log('Som detectado');
-                };
-                
-                this.recognition.onsoundend = () => {
-                    this.log('Som finalizado');
-                };
-                
-                this.recognition.onspeechstart = () => {
-                    this.log('Fala detectada');
-                    this.updateStatus('🗣️ Fala detectada...', 'processing');
-                };
-                
-                this.recognition.onspeechend = () => {
-                    this.log('Fala finalizada');
-                };
-            }
-            
-            handleRecognitionResult(event) {
-                let interimTranscript = '';
-                let finalTranscript = '';
-                let confidence = 0;
-                
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const result = event.results[i];
-                    const transcript = result[0].transcript;
-                    confidence = result[0].confidence || 0;
-                    
-                    if (result.isFinal) {
-                        finalTranscript += transcript;
-                        this.log(`Resultado final: "${transcript}" (confiança: ${confidence.toFixed(2)})`);
-                    } else {
-                        interimTranscript += transcript;
-                        this.log(`Resultado parcial: "${transcript}"`);
-                    }
-                }
-                
-                // Atualiza status com resultado parcial
-                if (interimTranscript) {
-                    this.updateStatus(`📝 "${interimTranscript}"`, 'processing');
-                }
-                
-                // Processa resultado final
-                if (finalTranscript && finalTranscript !== this.lastResult) {
-                    this.lastResult = finalTranscript;
-                    const cleanTranscript = finalTranscript.trim();
-                    
-                    if (cleanTranscript.length > 0) {
-                        this.addMessage(`Você: ${cleanTranscript}`, 'user', confidence);
-                        this.processCommand(cleanTranscript.toLowerCase());
-                    }
-                }
-            }
-            
-            handleRecognitionError(event) {
-                let errorMessage = '';
-                let shouldRestart = false;
-                
-                switch (event.error) {
-                    case 'no-speech':
-                        errorMessage = 'Nenhuma fala detectada';
-                        shouldRestart = this.continuousMode;
-                        break;
-                    case 'audio-capture':
-                        errorMessage = 'Erro na captura de áudio';
-                        break;
-                    case 'not-allowed':
-                        errorMessage = 'Permissão de microfone negada';
-                        this.continuousMode = false;
-                        break;
-                    case 'network':
-                        errorMessage = 'Erro de rede';
-                        shouldRestart = this.continuousMode;
-                        break;
-                    case 'aborted':
-                        errorMessage = 'Reconhecimento abortado';
-                        break;
-                    default:
-                        errorMessage = `Erro desconhecido: ${event.error}`;
-                }
-                
-                if (event.error !== 'no-speech') {
-                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                }
-                
-                this.updateStatus(`❌ ${errorMessage}`, 'error');
-                
-                // Tenta reiniciar se apropriado
-                if (shouldRestart) {
-                    setTimeout(() => {
-                        if (this.continuousMode) {
-                            this.startRecognition();
-                        }
-                    }, 1000);
-                }
-            }
-            
-            async setupAudioMonitoring() {
-                try {
-                    this.microphoneStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true,
-                            sampleRate: 44100
-                        }
-                    });
-                    
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const source = this.audioContext.createMediaStreamSource(this.microphoneStream);
-                    this.analyser = this.audioContext.createAnalyser();
-                    
-                    this.analyser.fftSize = 256;
-                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-                    
-                    source.connect(this.analyser);
-                    this.monitorAudio();
-                    
-                    this.log('Monitoramento de áudio configurado');
-                    this.updateStatus('✅ Pronto para usar', 'ready');
-                    
-                } catch (error) {
-                    this.log(`Erro no acesso ao microfone: ${error.message}`);
-                    this.handleMicrophoneError(error);
-                }
-            }
-            
-            monitorAudio() {
-                if (!this.analyser) return;
-                
-                this.analyser.getByteFrequencyData(this.dataArray);
-                let sum = 0;
-                for (let i = 0; i < this.dataArray.length; i++) {
-                    sum += this.dataArray[i];
-                }
-                const average = sum / this.dataArray.length;
-                
-                this.volumeBar.style.width = Math.min(average * 2, 100) + '%';
-                
-                requestAnimationFrame(() => this.monitorAudio());
-            }
-            
-            setupEventListeners() {
-                this.startBtn.addEventListener('click', () => this.startContinuousMode());
-                this.stopBtn.addEventListener('click', () => this.stopContinuousMode());
-                
-                // Push-to-talk
-                this.talkButton.addEventListener('mousedown', () => this.startSingleRecognition());
-                this.talkButton.addEventListener('mouseup', () => this.stopSingleRecognition());
-                
-                this.talkButton.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.startSingleRecognition();
-                });
-                
-                this.talkButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.stopSingleRecognition();
-                });
-                
-                // Previne comportamentos indesejados em mobile
-                this.talkButton.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                });
-            }
-            
-            startContinuousMode() {
-                this.log('Iniciando modo contínuo');
-                this.continuousMode = true;
-                this.recognition.continuous = true;
-                this.startRecognition();
-            }
-            
-            stopContinuousMode() {
-                this.log('Parando modo contínuo');
-                this.continuousMode = false;
-                this.stopRecognition();
-            }
-            
-            startSingleRecognition() {
-                this.log('Iniciando reconhecimento único (push-to-talk)');
-                this.recognition.continuous = false;
-                this.talkButton.classList.add('recording');
-                this.startRecognition();
-            }
-            
-            stopSingleRecognition() {
-                this.log('Parando reconhecimento único');
-                this.talkButton.classList.remove('recording');
-                this.stopRecognition();
-            }
-            
-            startRecognition() {
-                if (!this.recognition || this.isListening) return;
-                
-                try {
-                    // Força o contexto de áudio a ser ativo (importante para mobile)
-                    if (this.audioContext && this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                    }
-                    
-                    this.recognition.start();
-                } catch (error) {
-                    this.log(`Erro ao iniciar reconhecimento: ${error.message}`);
-                    if (error.name === 'InvalidStateError') {
-                        // Reconhecimento já está ativo, força parada e reinicia
-                        this.recognition.stop();
-                        setTimeout(() => {
-                            this.recognition.start();
-                        }, 100);
-                    }
-                }
-            }
-            
-            stopRecognition() {
-                if (this.recognition && this.isListening) {
-                    this.recognition.stop();
-                }
-            }
-            
-            showEngineSuccess() {
-                this.engineInfo.innerHTML = `<i class="fas fa-check-circle"></i> Motor: ${this.recognitionEngine.toUpperCase()} - Funcionando`;
-                this.engineInfo.className = 'engine-info';
-            }
-            
-            showEngineError() {
-                this.engineInfo.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Reconhecimento de voz não disponível neste navegador';
-                this.engineInfo.className = 'engine-info error';
-                this.startBtn.disabled = true;
-                this.talkButton.disabled = true;
-            }
-            
-            handleMicrophoneError(error) {
-                let errorMessage = 'Erro ao acessar microfone';
-                if (error.name === 'NotAllowedError') {
-                    errorMessage = 'Permissão de microfone negada. Atualize as permissões do navegador.';
-                }
-                
-                this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
-                this.updateStatus('❌ Sem microfone', 'error');
-                this.startBtn.disabled = true;
-                this.talkButton.disabled = true;
-            }
-            
-            processCommand(command) {
-                const normalizedCommand = this.normalizeText(command);
-                const now = new Date();
-                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-                let response = '';
-
-                this.log(`Processando comando: "${command}"`);
-
-                // Comandos básicos
-                if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || 
-                    normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || 
-                    normalizedCommand.includes('boa noite')) {
-                    response = 'Olá! Como posso te ajudar hoje?';
-                } 
-                else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || 
-                         normalizedCommand.includes('voce esta bem')) {
-                    response = 'Estou bem, obrigado! E você, como está?';
-                } 
-                else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || 
-                         normalizedCommand.includes('fale sobre voce')) {
-                    response = 'Eu sou o Bloquito, seu assistente de voz com reconhecimento real! Especializado em produtos da Asthor Barden.';
-                } 
-                else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
-                    response = `Agora são ${timeString}.`;
-                } 
-                else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
-                    response = 'Parando o reconhecimento. Até mais!';
-                    this.stopContinuousMode();
-                }
                 // Comandos específicos dos produtos
                 else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('fale sobre o bloco mais')) {
-                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, com componentes em blocos para facilitar conexões físicas. Focado em robótica, automação e eletrônica básica.';
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor Barden, com componentes em blocos para facilitar conexões físicas de forma prática e modular. É focado em robótica, automação e eletrônica básica.';
                 } 
                 else if (normalizedCommand.includes('o que e steamaker')) {
-                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em montagens.';
+                    response = 'O STEAMAKER é um kit similar ao Bloco+, mas com componentes organizados em módulos para maior flexibilidade em diferentes tipos de montagem.';
                 } 
                 else if (normalizedCommand.includes('bloco mais bot')) {
-                    response = 'O Bloco+Bot é o microcontrolador central com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
+                    response = 'O Bloco+Bot é o microcontrolador central do kit, equipado com ESP32, sensores integrados e capacidade de controlar motores e LEDs.';
                 } 
-                else if (normalizedCommand.includes('corellaser')) {
-                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em projetos educacionais com os kits Asthor Barden.';
+                else if (normalizedCommand.includes('corellaser') || normalizedCommand.includes('fale sobre corellaser')) {
+                    response = 'O CorelLASER é um programa para controle de máquinas de corte a laser, usado em conjunto com os kits Asthor Barden para projetos educacionais.';
+                }
+                else if (normalizedCommand.includes('asthor barden')) {
+                    response = 'A Asthor Barden é a empresa responsável pelo desenvolvimento dos kits Bloco+ e STEAMAKER, focados em eletrônica pedagógica e tecnologias educacionais.';
                 }
                 else {
-                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden.';
+                    response = 'Desculpe, não entendi. Posso ajudar com informações sobre Bloco+, STEAMAKER ou outros produtos da Asthor Barden. Tente falar mais claramente ou use o botão de teste.';
                 }
 
                 if (response) {
@@ -820,8 +36,10 @@
             
             speak(text) {
                 if ('speechSynthesis' in window) {
-                    // Para o reconhecimento durante a fala para evitar feedback
+                    // Para o reconhecimento durante a fala
                     const wasListening = this.isListening;
+                    const wasContinuous = this.continuousMode;
+                    
                     if (wasListening) {
                         this.stopRecognition();
                     }
@@ -832,9 +50,17 @@
                     utterance.pitch = 1;
                     utterance.volume = 0.8;
                     
+                    utterance.onstart = () => {
+                        this.log('🔊 Iniciando síntese de fala');
+                        this.updateStatus('🔊 Falando...', 'processing');
+                    };
+                    
                     utterance.onend = () => {
+                        this.log('�� Síntese de fala finalizada');
+                        this.updateStatus('✅ Pronto', 'ready');
+                        
                         // Reinicia o reconhecimento se estava ativo
-                        if (wasListening && this.continuousMode) {
+                        if (wasContinuous && this.continuousMode) {
                             setTimeout(() => {
                                 this.startRecognition();
                             }, 500);
@@ -842,10 +68,12 @@
                     };
                     
                     utterance.onerror = (event) => {
-                        this.log(`Erro na síntese de fala: ${event.error}`);
+                        this.log(`❌ Erro na síntese: ${event.error}`);
                     };
                     
                     speechSynthesis.speak(utterance);
+                } else {
+                    this.log('❌ Síntese de fala não suportada');
                 }
             }
             
@@ -856,16 +84,21 @@
                 this.statusIndicator.style.backgroundColor = '';
                 this.statusIndicator.style.animation = '';
                 
-                if (state === 'listening') {
-                    this.statusIndicator.classList.add('listening');
-                } else if (state === 'processing') {
-                    this.statusIndicator.classList.add('processing');
-                } else if (state === 'error') {
-                    this.statusIndicator.style.backgroundColor = '#f44336';
-                } else if (state === 'ready') {
-                    this.statusIndicator.style.backgroundColor = '#4CAF50';
-                } else {
-                    this.statusIndicator.style.backgroundColor = '#666';
+                switch(state) {
+                    case 'listening':
+                        this.statusIndicator.classList.add('listening');
+                        break;
+                    case 'processing':
+                        this.statusIndicator.classList.add('processing');
+                        break;
+                    case 'error':
+                        this.statusIndicator.style.backgroundColor = '#f44336';
+                        break;
+                    case 'ready':
+                        this.statusIndicator.style.backgroundColor = '#4CAF50';
+                        break;
+                    default:
+                        this.statusIndicator.style.backgroundColor = '#666';
                 }
             }
             
@@ -876,29 +109,50 @@
                 const messageEl = document.createElement('div');
                 messageEl.className = `message ${type}-message`;
                 
-                let confidenceIndicator = '';
+                let confidenceDisplay = '';
                 if (confidence !== null && type === 'user') {
                     const confidencePercent = Math.round(confidence * 100);
-                    confidenceIndicator = `<div class="confidence-indicator">${confidencePercent}%</div>`;
+                    let confidenceColor = '#4CAF50';
+                    if (confidencePercent < 70) confidenceColor = '#FF9800';
+                    if (confidencePercent < 50) confidenceColor = '#f44336';
+                    
+                    confidenceDisplay = `<span style="color: ${confidenceColor}; font-size: 10px; opacity: 0.8;"> (${confidencePercent}%)</span>`;
                 }
                 
                 messageEl.innerHTML = `
-                    ${message}
-                    ${confidenceIndicator}
+                    ${message}${confidenceDisplay}
                     <div class="message-time">${timeString}</div>
                 `;
                 
                 this.conversationEl.appendChild(messageEl);
                 this.conversationEl.scrollTop = this.conversationEl.scrollHeight;
+                
+                // Limita mensagens a 20 para performance
+                const messages = this.conversationEl.children;
+                if (messages.length > 20) {
+                    this.conversationEl.removeChild(messages[0]);
+                }
+            }
+            
+            showError(message) {
+                this.engineInfo.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+                this.engineInfo.style.background = 'rgba(244, 67, 54, 0.2)';
+                this.engineInfo.style.borderColor = 'rgba(244, 67, 54, 0.3)';
+                this.updateStatus('❌ Erro', 'error');
+                this.startBtn.disabled = true;
+                this.talkButton.disabled = true;
             }
         }
         
+        // Variável global para permitir acesso aos comandos de teste
+        let assistant;
+        
         // Inicializa o sistema quando a página carrega
         document.addEventListener('DOMContentLoaded', () => {
-            const assistant = new RealVoiceRecognition();
+            assistant = new OptimizedVoiceRecognition();
             
             setTimeout(() => {
-                assistant.addMessage('Bloquito: Sistema de reconhecimento real iniciado! Teste os comandos de voz.', 'bot');
+                assistant.addMessage('Bloquito: Sistema otimizado iniciado! Use "Pressionar e Falar" para melhor precisão ou teste os comandos clicando neles.', 'bot');
             }, 2000);
         });
     </script>
