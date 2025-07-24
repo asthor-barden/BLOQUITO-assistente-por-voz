@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloquito - Seu Assistente de Voz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E8B57 100%); /* Um verde mais vibrante */
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-sizing: border-box;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 25px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: background 0.3s ease, border-color 0.3s ease;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .listening {
+            background: rgba(76, 175, 80, 0.5); /* Verde mais claro */
+            border: 2px solid #A5D6A7;
+        }
+        
+        .not-listening {
+            background: rgba(244, 67, 54, 0.5); /* Vermelho mais suave */
+            border: 2px solid #EF9A9A;
+        }
+        
+        .volume-indicator {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            margin: 10px 0 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .volume-bar {
+            height: 100%;
+            background: #FFD700; /* Dourado */
+            width: 0%;
+            transition: width 0.1s ease-out;
+            border-radius: 5px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap; /* Para mobile */
+        }
+        
+        button {
+            background: #FFD700; /* Dourado */
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            flex-grow: 1; /* Para mobile */
+            max-width: 250px; /* Para mobile */
+        }
+        
+        button:hover {
+            background: #FFC107; /* Dourado mais escuro */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .conversation {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            opacity: 0; /* Começa invisível para animação */
+            transform: translateY(10px);
+            animation: fadeInMessage 0.3s forwards;
+        }
+
+        @keyframes fadeInMessage {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-message {
+            background: rgba(25, 118, 210, 0.6); /* Azul mais escuro */
+            text-align: right;
+            margin-left: 20%;
+        }
+        
+        .bot-message {
+            background: rgba(30, 136, 229, 0.6); /* Azul mais claro */
+            margin-right: 20%;
+        }
+        
+        .commands {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .commands h3 {
+            margin-top: 0;
+            color: #FFD700; /* Dourado */
+            text-align: center;
+        }
+        
+        .commands ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        
+        .commands li {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+            h1 {
+                font-size: 26px;
+            }
+            button {
+                padding: 12px 25px;
+                font-size: 15px;
+            }
+            .status, .message, .commands h3, .commands ul li {
+                font-size: 14px;
+            }
+            .user-message, .bot-message {
+                margin: 0; /* Remove side margins for full width */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                width: 100%;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            button {
+                width: 100%;
+                max-width: none;
+            }
+            .status, .message, .commands h3, .commands ul li {
+                font-size: 13px;
+            }
+            .conversation {
+                max-height: 200px; /* Smaller height for mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bloquito - Seu Assistente de Voz</h1>
+        
+        <div id="status" class="status not-listening">
+            Não está ouvindo
+        </div>
+        
+        <div class="volume-indicator">
+            <div id="volumeBar" class="volume-bar"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">Iniciar Reconhecimento</button>
+            <button id="stopBtn" disabled>Parar</button>
+        </div>
+        
+        <div class="commands">
+            <h3>Comandos e Perguntas Sugeridas:</h3>
+            <ul>
+                <li>"Oi", "Olá", "Bom dia", "Boa tarde", "Boa noite"</li>
+                <li>"Tudo bem?", "Como vai?", "Você está bem?"</li>
+                <li>"Quem é você?", "Como é seu nome?", "Fale sobre você"</li>
+                <li>"Que horas são?"</li>
+                <li>"Parar"</li>
+                <li>"O que é Bloco+?", "O que é Asthor bardem?"</li>
+                <li>"O que é esteam makerm?"</li>
+                <li>"O que é Bloco+ Bot?"</li>
+                <li>"Quais são os componentes do Bloco+?"</li>
+                <li>"Como instalar Arduino para Bloco+?"</li>
+                <li>"O que são as portas do Bloco+ Bot?"</li>
+                <li>"Fale sobre o CorelLASER"</li>
+                <li>"O que são as Fichas Asthor?"</li>
+            </ul>
+        </div>
+        
+        <div class="conversation" id="conversation">
+            <div class="message bot-message">
+                Olá! Eu sou o Bloquito. Clique em "Iniciar Reconhecimento" para começarmos a conversar sobre os kits Bloco+ e esteam makerm!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VoiceAssistant {
+            constructor() {
+                this.recognition = null;
+                this.isListening = false;
+                this.recognitionActiveByUser = false; // Flag para controlar se o usuário quer o reconhecimento ativo
+                this.audioContext = null;
+                this.microphone = null;
+                this.analyser = null;
+                this.dataArray = null;
+                this.silenceThreshold = 25; // Limite de volume para considerar silêncio (ajustado)
+                
+                this.initializeElements();
+                this.setupSpeechRecognition();
+                this.setupEventListeners();
+                this.setupAudioMonitoring();
+            }
+            
+            initializeElements() {
+                this.statusEl = document.getElementById('status');
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.conversationEl = document.getElementById('conversation');
+                this.volumeBar = document.getElementById('volumeBar');
+            }
+            
+            async setupAudioMonitoring() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.microphone = this.audioContext.createMediaStreamSource(stream);
+                    this.analyser = this.audioContext.createAnalyser();
+                    
+                    this.analyser.fftSize = 256;
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    
+                    this.microphone.connect(this.analyser);
+                    // Disconnect from destination to avoid audio feedback, but allow analysis
+                    // this.analyser.connect(this.audioContext.destination); // No longer needed
+                    this.monitorAudio();
+                } catch (error) {
+                    console.error('Erro ao acessar microfone:', error);
+                    this.addMessage('Erro ao acessar microfone. Verifique as permissões do navegador.', 'bot');
+                }
+            }
+            
+            monitorAudio() {
+                if (!this.analyser) return;
+                
+                this.analyser.getByteFrequencyData(this.dataArray);
+                
+                let sum = 0;
+                for (let i = 0; i < this.dataArray.length; i++) {
+                    sum += this.dataArray[i];
+                }
+                const average = sum / this.dataArray.length;
+                
+                this.volumeBar.style.width = Math.min(average * 2, 100) + '%'; // Escala para 0-100%
+                
+                requestAnimationFrame(() => this.monitorAudio());
+            }
+            
+            setupSpeechRecognition() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    this.addMessage('Seu navegador não suporta reconhecimento de voz. Use Chrome ou Edge para melhor experiência.', 'bot');
+                    return;
+                }
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                
+                this.recognition.continuous = true;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'pt-BR';
+                
+                this.recognition.onstart = () => this.onStart();
+                this.recognition.onresult = (event) => this.onResult(event);
+                this.recognition.onerror = (event) => this.onError(event);
+                this.recognition.onend = () => this.onEnd();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startListening());
+                this.stopBtn.addEventListener('click', () => this.stopListening());
+
+                // Lidar com a pausa e retomada da síntese de fala
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.onvoiceschanged = () => {
+                        // Isso garante que as vozes estejam carregadas, mas não precisa de ação aqui.
+                    };
+                }
+            }
+            
+            startListening() {
+                if (!this.recognition) return;
+                this.recognitionActiveByUser = true;
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    console.error('Erro ao iniciar reconhecimento:', error);
+                    // Pode ser que já esteja ativo, ou permissão negada, etc.
+                    if (error.name === 'InvalidStateError') {
+                         this.addMessage('Reconhecimento já está ativo ou não pode ser iniciado agora.', 'bot');
+                    } else if (error.name === 'NotAllowedError') {
+                        this.addMessage('Permissão de microfone negada. Por favor, permita o acesso ao microfone.', 'bot');
+                    }
+                }
+            }
+            
+            stopListening() {
+                if (this.recognition) {
+                    this.recognitionActiveByUser = false;
+                    this.recognition.stop();
+                }
+            }
+            
+            onStart() {
+                this.isListening = true;
+                this.updateStatus('Ouvindo...', 'listening');
+                this.startBtn.disabled = true;
+                this.stopBtn.disabled = false;
+            }
+            
+            onResult(event) {
+                let finalTranscript = '';
+                let confidence = 0;
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                        confidence = event.results[i][0].confidence;
+                    }
+                }
+                
+                finalTranscript = finalTranscript.trim();
+
+                // Processa apenas se houver transcrição e confiança razoável
+                if (finalTranscript.length > 0 && confidence > 0.4) { // Aumentei a confiança mínima para evitar ruídos
+                    this.addMessage(`Você: ${finalTranscript}`, 'user');
+                    this.processCommand(finalTranscript.toLowerCase());
+                }
+            }
+            
+            onError(event) {
+                // 'no-speech' ocorre quando não detecta fala; vamos ignorar para evitar mensagens de erro excessivas
+                if (event.error !== 'no-speech') {
+                    console.error('Erro no reconhecimento:', event.error);
+                    let errorMessage = '';
+                    switch (event.error) {
+                        case 'audio-capture':
+                            errorMessage = 'Erro ao capturar áudio do microfone.';
+                            break;
+                        case 'not-allowed':
+                            errorMessage = 'Permissão de microfone negada. Por favor, permita o acesso.';
+                            break;
+                        case 'network':
+                            errorMessage = 'Erro de rede. Verifique sua conexão.';
+                            break;
+                        default:
+                            errorMessage = `Erro no reconhecimento: ${event.error}`;
+                    }
+                    this.addMessage(`Bloquito: ${errorMessage}`, 'bot');
+                }
+            }
+            
+            onEnd() {
+                this.isListening = false;
+                this.updateStatus('Não está ouvindo', 'not-listening');
+                this.startBtn.disabled = false;
+                this.stopBtn.disabled = true;
+                
+                // Reinicia automaticamente apenas se o usuário ainda quer o reconhecimento ativo
+                if (this.recognitionActiveByUser) {
+                    // Pequeno atraso para evitar "loop" de start/stop rápido
+                    setTimeout(() => {
+                        if (this.recognitionActiveByUser) { // Verifica novamente após o atraso
+                            this.startListening();
+                        }
+                    }, 500); 
+                }
+            }
+            
+            processCommand(command) {
+                let response = '';
+                const normalizedCommand = this.normalizeText(command);
+
+                // --- Comandos Gerais e Apresentação do Bloquito ---
+                if (normalizedCommand.includes('oi') || normalizedCommand.includes('ola') || normalizedCommand.includes('bom dia') || normalizedCommand.includes('boa tarde') || normalizedCommand.includes('boa noite')) {
+                    response = 'Olá! Como posso te ajudar?';
+                } else if (normalizedCommand.includes('tudo bem') || normalizedCommand.includes('como vai') || normalizedCommand.includes('voce esta bem')) {
+                    response = 'Estou bem, obrigado! E você, como está?';
+                } else if (normalizedCommand.includes('quem e voce') || normalizedCommand.includes('como e seu nome') || normalizedCommand.includes('fale sobre voce') || normalizedCommand.includes('qual seu nome') || normalizedCommand.includes('apresente se')) {
+                    response = 'Olá! Eu sou o Bloquito, seu assistente virtual especializado nos kits Bloco+ e esteam makerm, desenvolvidos pela Asthor Bardem. Minha missão é ajudar você a explorar nossos kits de eletrônica pedagógica, projetados para facilitar o ensino e a prática de robótica, automação e eletrônica básica. Estou aqui para esclarecer dúvidas, orientar projetos e fichas educativas e garantir que você aproveite ao máximo esses recursos incríveis, sempre utilizando as informações oficiais disponíveis no site blocomais.com.br e nos arquivos de treinamento fornecidos.';
+                } else if (normalizedCommand.includes('que horas') || normalizedCommand.includes('horas sao')) {
+                    const now = new Date();
+                    response = `Agora são ${now.getHours()} horas e ${now.getMinutes().toString().padStart(2, '0')} minutos.`;
+                } else if (normalizedCommand.includes('parar') || normalizedCommand.includes('pare')) {
+                    response = 'Parando o reconhecimento de voz. Até mais!';
+                    this.stopListening();
+                }
+                // --- Perguntas Específicas sobre Bloco+ e Asthor bardem ---
+                else if (normalizedCommand.includes('o que e bloco mais') || normalizedCommand.includes('o que e blocomais') || normalizedCommand.includes('fale sobre o bloco mais')) {
+                    response = 'O Bloco+ é um kit de eletrônica pedagógica da Asthor bardem, onde os componentes estão dispostos em blocos, projetados para facilitar conexões físicas de maneira prática e modular. Ele é focado em robótica, automação e eletrônica básica.';
+                } else if (normalizedCommand.includes('o que e esteam makerm') || normalizedCommand.includes('o que e steam maker') || normalizedCommand.includes('fale sobre o esteam makerm')) {
+                    response = 'O esteam makerm é um kit semelhante ao Bloco+, também da Asthor bardem, mas seus componentes são organizados em módulos, oferecendo maior flexibilidade em diferentes tipos de montagem. As funcionalidades são similares às dos blocos do Bloco+, com foco em montagem e experimentação prática.';
+                } else if (normalizedCommand.includes('bloco mais bot') || normalizedCommand.includes('bloco+ bot') || normalizedCommand.includes('o que e bloco mais bot') || normalizedCommand.includes('esp32 bloco mais')) {
+                    response = 'O Bloco+Bot é o microcontrolador central do Bloco+, ele vem com um ESP32 integrado, acelerômetro, giroscópio, sensor de temperatura, e tem capacidade de controlar dois motores DC, LEDs e um buzzer. É o cérebro do sistema!';
+                } else if (normalizedCommand.includes('quais sao os componentes do bloco mais') || normalizedCommand.includes('componentes bloco mais') || normalizedCommand.includes('modulos bloco mais') || normalizedCommand.includes('pecas bloco mais')) {
+                    response = 'O kit Bloco+ inclui o Bloco+Bot, módulos de conexão (vermelho e preto), módulos de resistores (H e L), módulo press switch, módulo power (alimentação 5V), módulo LEDs com cinco cores, módulos de capacitores (C e E), módulo Oscilador, módulo amplificador, módulo PIC com programas pré-definidos, módulo chipcorder para gravação/reprodução de sons. Também possui outros como NPN, PNP, SCR, potenciômetro, speaker, piezo, sensores infravermelhos, motores DC, servo motores e cabos de conexão.';
+                } else if (normalizedCommand.includes('como instalar arduino') || normalizedCommand.includes('instalacao arduino') || normalizedCommand.includes('arduino para bloco mais')) {
+                    response = 'A instalação do ambiente de programação do Bloco+ Bot envolve quatro partes: uma modificação do software Arduino IDE com Ardublock, a instalação de um driver de comunicação para o ESP32, um arquivo de configuração para o Arduino IDE reconhecer o ESP32, e a instalação da biblioteca ESP32Servo. Você pode encontrar os passos detalhados no documento de "Instruções de instalação do Arduino".';
+                } else if (normalizedCommand.includes('mapa de portas') || normalizedCommand.includes('portas bloco mais bot') || normalizedCommand.includes('conexoes bloco mais bot')) {
+                    response = 'O Bloco+ Bot possui portas internas como D14, D13, D23, D19 (para Ponte H e LEDs), D12 (Buzzer ativo), D2 (LED D2). E portas externas como Vin, GND, 3V3, várias portas digitais (D15 a D25), portas analógicas (A0 a A7), e saídas para pontes H (MA, MB). O detalhamento completo está no documento "Mapa de portas Bloco+ Bot".';
+                } else if (normalizedCommand.includes('corellaser') || normalizedCommand.includes('maquina de corte laser') || normalizedCommand.includes('corel laser')) {
+                    response = 'O CorelLASER é um programa de controle para máquina de corte a laser. Para sua instalação, é necessário primeiro instalar o CorelDRAW 12. As instruções detalhadas estão no documento "Instruções de instalação do CorelLASER". No contexto da Asthor bardem, ele é usado em conjunto com os kits para produção de peças e projetos educacionais.';
+                } else if (normalizedCommand.includes('fichas asthor') || normalizedCommand.includes('guia de referencia') || normalizedCommand.includes('fichas pedagogicas')) {
+                    response = 'O "Guia de Referência Fichas Asthor" é um material orientativo para professores, que apresenta as Fichas de Atividades e instruções de uso. Ele alinha a pedagogia da Asthor bardem com a Base Nacional Comum Curricular (BNCC), focando em metodologias ativas como a Aprendizagem Baseada em Projetos (ABP), e incentivando o desenvolvimento de competências gerais e habilidades essenciais para os alunos. As fichas são matrizes para criação de novas práticas e abrangem áreas STEAM.';
+                } else if (normalizedCommand.includes('o que e asthor bardem') || normalizedCommand.includes('astor bardem')) {
+                    response = 'Asthor bardem é a empresa responsável pelo desenvolvimento dos kits Bloco+ e esteam makerm, focados em eletrônica pedagógica e tecnologias como robótica e automação, para auxiliar no ensino e aprendizado.';
+                }
+                // --- Fallback Inteligente (com palavras-chave) ---
+                else if (normalizedCommand.includes('bloco mais') || normalizedCommand.includes('blocomais') || normalizedCommand.includes('asthor bardem') || normalizedCommand.includes('astor bardem') || normalizedCommand.includes('steamak') || normalizedCommand.includes('kit') || normalizedCommand.includes('bot') || normalizedCommand.includes('eletronica') || normalizedCommand.includes('robotica') || normalizedCommand.includes('pedagogico') || normalizedCommand.includes('projeto') || normalizedCommand.includes('curso')) {
+                    let extractedPhrase = command;
+                    // Tenta extrair uma parte relevante da frase do usuário
+                    const keywords = ['bloco mais', 'blocomais', 'asthor bardem', 'astor bardem', 'steamak', 'kit', 'bot', 'eletronica', 'robotica', 'pedagogico', 'projeto', 'curso', 'arduino', 'laser', 'corel'];
+                    let foundKeyword = false;
+                    for (const keyword of keywords) {
+                        if (normalizedCommand.includes(keyword)) {
+                            const index = normalizedCommand.indexOf(keyword);
+                            // Pega a frase ao redor da palavra-chave
+                            extractedPhrase = command.substring(Math.max(0, index - 10), Math.min(command.length, index + keyword.length + 20)).trim();
+                            if (extractedPhrase.length > 50) { // Limita o tamanho para não ficar muito longo
+                                extractedPhrase = extractedPhrase.substring(0, 47) + '...';
+                            }
+                            foundKeyword = true;
+                            break;
+                        }
+                    }
+                    if (!foundKeyword && command.length > 50) {
+                        extractedPhrase = command.substring(0, 47) + '...';
+                    }
+
+                    response = `Não sei responder sobre "${extractedPhrase}". Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor bardem. Se a informação não estiver lá, não consigo responder. Recomendo que você entre em contato diretamente com o suporte oficial através da página de contato do site.`;
+                }
+                // --- Fallback Geral ---
+                else {
+                    response = 'Desculpe, não entendi esse comando. Minhas respostas são baseadas exclusivamente nas informações disponíveis no site oficial blocomais.com.br e nos arquivos de treinamento fornecidos pela Asthor bardem. Se a informação não estiver lá, não consigo responder. Posso ajudar com outras perguntas sobre os kits?';
+                }
+
+                if (response) {
+                    this.addMessage(`Bloquito: ${response}`, 'bot');
+                    this.speak(response);
+                }
+            }
+            
+            normalizeText(text) {
+                return text
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+            }
+            
+            speak(text) {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'pt-BR';
+                    utterance.rate = 0.9; // Velocidade da fala
+
+                    // Se o reconhecimento estiver ativo, pare-o antes de falar
+                    if (this.recognition && this.isListening) {
+                        this.recognition.stop();
+                    }
+
+                    utterance.onend = () => {
+                        // Após a fala terminar, e se o usuário ainda quer que o reconhecimento esteja ativo, reinicie-o
+                        if (this.recognition && this.recognitionActiveByUser) {
+                            // Pequeno atraso para garantir que a fala terminou completamente e o microfone está livre
+                            setTimeout(() => {
+                                if (this.recognitionActiveByUser) { // Verifica novamente após o atraso
+                                    this.recognition.start();
+                                }
+                            }, 300); // 300ms de atraso
+                        }
+                    };
+
+                    utterance.onerror = (event) => {
+                        console.error('Erro na síntese de fala:', event.error);
+                        // Mesmo com erro, tente reiniciar o reconhecimento se o usuário deseja
+                        if (this.recognition && this.recognitionActiveByUser) {
+                             setTimeout(() => {
+                                if (this.recognitionActiveByUser) {
+                                    this.recognition.start();
+                                }
+                            }, 300);
+                        }
+                    };
+
+                    speechSynthesis.speak(utterance);
+                } else {
+                    console.warn('Síntese de fala não suportada neste navegador.');
+                }
+            }
+            
+            updateStatus(message, className) {
+                this.statusEl.textContent = message;
+                this.statusEl.className = `status ${className}`;
+            }
+            
+            addMessage(message, type) {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${type}-message`;
+                messageEl.textContent = message;
+                
+                this.conversationEl.appendChild(messageEl);
+                this.conversationEl.scrollTop = this.conversationEl.scrollHeight; // Rola para o final
+            }
+        }
+        
+        // Inicializa o assistente quando a página carrega
+        document.addEventListener('DOMContentLoaded', () => {
+            new VoiceAssistant();
+        });
+    </script>
+</body>
+</html>
