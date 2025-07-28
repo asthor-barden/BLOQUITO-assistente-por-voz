@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloquito - Assistente Inteligente</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-content">
+            <h2 class="welcome-title">Bem-vindo ao Bloquito</h2>
+            <p class="welcome-subtitle">Para uma experiência mais personalizada, você pode nos dizer seu nome. Isso é opcional e você pode pular esta etapa.</p>
+            <input type="text" class="name-input" id="nameInput" placeholder="Digite seu nome (opcional)" maxlength="50">
+            <div class="welcome-actions">
+                <button class="welcome-btn secondary" onclick="skipNameSetup()">Pular</button>
+                <button class="welcome-btn" onclick="setUserName()">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="createNewChat()">
+                <i class="fas fa-plus"></i>
+                Nova conversa
+            </button>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history items will be inserted here -->
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile" onclick="editUserName()">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">Usuário</div>
+                    <div class="user-status">Online</div>
+                </div>
+                <i class="fas fa-edit" style="color: #8e8ea0; font-size: 12px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Chat Mode -->
+        <div class="chat-mode" id="chatMode">
+            <div class="chat-header">
+                <div class="chat-title-header" id="chatTitleHeader">Bloquito</div>
+            </div>
+            
+            <div class="conversation" id="conversation">
+                <!-- Messages will be inserted here -->
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea class="text-input" id="textInput" placeholder="Envie uma mensagem..." rows="1"></textarea>
+                    <div class="input-actions">
+                        <button class="mic-btn" id="micBtn" onclick="toggleVoiceMode()">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Mode -->
+    <div class="voice-mode" id="voiceMode">
+        <div class="voice-header">
+            <button class="voice-back-btn" onclick="closeVoiceMode()">
+                <i class="fas fa-arrow-left"></i>
+                Voltar ao chat
+            </button>
+            <div class="voice-settings">
+                <div class="voice-control-group">
+                    <div class="voice-control-label">Voz</div>
+                    <select class="voice-select" id="voiceSelect">
+                        <option value="">Carregando vozes...</option>
+                    </select>
+                </div>
+                <div class="voice-control-group">
+                    <div class="voice-control-label">Velocidade</div>
+                    <select class="voice-speed" id="voiceSpeed">
+                        <option value="0.7">Lenta</option>
+                        <option value="0.9" selected>Normal</option>
+                        <option value="1.1">Rápida</option>
+                        <option value="1.3">Muito Rápida</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="voice-content">
+            <div class="voice-animation" id="voiceAnimation">
+                <i class="fas fa-microphone voice-icon"></i>
+            </div>
+            
+            <div class="voice-status" id="voiceStatus">Iniciando...</div>
+            <div class="voice-subtitle" id="voiceSubtitle">Preparando o sistema de reconhecimento de voz</div>
+            
+            <div class="voice-controls">
+                <button class="voice-control-btn" id="muteBtn" onclick="toggleMute()">
+                    <i class="fas fa-microphone"></i>
+                    Silenciar
+                </button>
+                <button class="voice-control-btn" id="stopVoiceBtn" onclick="closeVoiceMode()">
+                    <i class="fas fa-times"></i>
+                    Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts na ordem correta -->
+    <script src="./js/ui-manager.js"></script>
+    <script src="./js/voice-manager.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "words": {
+    "STEAMAKER": "Istim Maiquer",
+    "Bloco+": "Bloco mais",
+    "ESP32": "E S P trinta e dois",
+    "CorelLASER": "Corel Laser",
+    "Asthor Barden": "Asthor Bardem",
+    "LED": "L E D",
+    "LEDs": "L E Ds",
+    "DC": "D C",
+    "IoT": "I o T",
+    "WiFi": "Uai Fai",
+    "Bluetooth": "Blu-tus",
+    "USB": "U S B",
+    "API": "A P I",
+    "SDK": "S D K",
+    "IDE": "I D E"
+  },
+  "phrases": {
+    "Bloco+ Bot": "Bloco mais Bot",
+    "kit STEAM": "kit Istim",
+    "projetos STEAM": "projetos Istim",
+    "Asthor Barden": "Asthor Bardem"
+  },
+  "symbols": {
+    "+": " mais ",
+    "&": " e ",
+    "@": " arroba ",
+    "%": " por cento",
+    "°C": " graus celsius",
+    "°F": " graus fahrenheit",
+    "#": " hashtag ",
+    "$": " dólar "
+  }
+}

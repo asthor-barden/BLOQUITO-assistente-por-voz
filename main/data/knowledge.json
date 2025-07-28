@@ -1,0 +1,67 @@
+{
+  "greetings": {
+    "keywords": ["oi", "ola", "bom dia", "boa tarde", "boa noite", "hey", "e ai"],
+    "response": "Olá{userName}! Como posso ajudá-lo hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Barden.",
+    "speech": "Oi {userName}! Como posso ajudar você hoje? Estou aqui para responder suas perguntas sobre os produtos da Asthor Bardem."
+  },
+  "wellbeing": {
+    "keywords": ["tudo bem", "como vai", "voce esta bem", "como voce esta", "como esta"],
+    "response": "Estou muito bem, obrigado{userName}! Funcionando perfeitamente e pronto para ajudar. E você, como está?",
+    "speech": "Estou muito bem, obrigado{userName}! Funcionando perfeitamente e pronto para ajudar. E voce, como esta?"
+  },
+  "identity": {
+    "keywords": ["quem e voce", "como e seu nome", "fale sobre voce", "se apresente", "quem voce e", "qual seu nome", "seu nome"],
+    "response": "Eu sou o Bloquito{userName}! Sou seu assistente inteligente especializado em produtos da Asthor Barden. Posso ajudar com informações sobre Bloco+, STEAMAKER, CorelLASER e muito mais.",
+    "speech": "Eu sou o Bloquito{userName}! Sou seu assistente inteligente especializado em produtos da Asthor Barden. Posso ajudar com Bloco mais, Istim Meiquerer, Corel Leiser e muito mais."
+  },
+  "time": {
+    "keywords": ["que horas", "horas sao", "horario"],
+    "response": "Agora são {time}{userName}.",
+    "speech": "Exatamente {time}{userName}."
+  },
+  "stop": {
+    "keywords": ["parar", "pare", "finalizar", "sair", "tchau", "ate logo", "ate mais", "adeus"],
+    "response": "Entendido{userName}! {stopAction}",
+    "speech": "Entendido{userName}! {stopAction}",
+    "action": "stop_voice"
+  },
+  "bloco_plus": {
+    "keywords": ["o que e bloco mais", "fale sobre o bloco mais", "bloco+", "bloco mais", "kit bloco"],
+    "response": "O Bloco+ é um kit de eletrônica pedagógica inovador da Asthor Barden{userName}. Os componentes estão organizados em blocos modulares que facilitam as conexões físicas, sendo perfeito para ensinar robótica, automação e eletrônica básica de forma prática e divertida.",
+    "speech": "O Bloco mais é um kit de eletronica pedagogica inovador da Asthor Bardem{userName}. Os componentes estão organizados em blocos modulares que facilitam as conexões físicas, sendo perfeito para ensinar robótica, automação e eletrônica básica de forma prática e divertida."
+  },
+  "steamaker": {
+    "keywords": ["o que e steamaker", "fale sobre steamaker", "steamaker", "steam maker"],
+    "response": "O STEAMAKER é outro kit fantástico da Asthor Barden{userName}. Similar ao Bloco+, mas com componentes organizados em módulos que oferecem ainda maior flexibilidade para diferentes tipos de montagem. É ideal para projetos STEAM mais avançados.",
+    "speech": "O Steam Maker é outro kit fantástico da Asthor Barden{userName}. Similar ao Bloco mais, mas com componentes organizados em módulos que oferecem ainda maior flexibilidade para diferentes tipos de montagem. É ideal para projetos Steam mais avançados."
+  },
+  "bloco_bot": {
+    "keywords": ["bloco mais bot", "blocobot", "bloco+ bot", "esp32", "microcontrolador"],
+    "response": "O Bloco+Bot é o cérebro do sistema{userName}! É um microcontrolador baseado em ESP32 com sensores integrados como acelerômetro, giroscópio e temperatura, além de ter capacidade para controlar motores DC, LEDs e buzzer. É realmente o coração de todos os projetos.",
+    "speech": "O Bloco mais Bot é o cérebro do sistema{userName}! É um microcontrolador baseado em E S P trinta e dois com sensores integrados como acelerômetro, giroscópio e temperatura, além de ter capacidade para controlar motores D C, L E Ds e buzzer. É realmente o coração de todos os projetos."
+  },
+  "corellaser": {
+    "keywords": ["corellaser", "fale sobre corellaser", "corel laser", "software laser", "corte laser"],
+    "response": "O CorelLASER é um software especializado para controle de máquinas de corte a laser{userName}. É usado em conjunto com os kits da Asthor Barden para criar peças personalizadas e projetos educacionais incríveis. Perfeito para makers e educadores.",
+    "speech": "O Corel Laser é um software especializado para controle de máquinas de corte a laser{userName}. É usado em conjunto com os kits da Asthor Barden para criar peças personalizadas e projetos educacionais incríveis. Perfeito para makers e educadores."
+  },
+  "asthor_barden": {
+    "keywords": ["asthor barden", "empresa", "fabricante", "quem faz"],
+    "response": "A Asthor Barden é a empresa inovadora por trás de todos esses produtos{userName}! Eles são especialistas em eletrônica pedagógica e tecnologias educacionais, sempre focando em tornar o aprendizado mais prático e envolvente.",
+    "speech": "A Asthor Barden é a empresa inovadora por trás de todos esses produtos{userName}! Eles são especialistas em eletrônica pedagógica e tecnologias educacionais, sempre focando em tornar o aprendizado mais prático e envolvente."
+  },
+  "help": {
+    "keywords": ["ajuda", "help", "comandos", "o que voce faz", "como usar"],
+    "response": "Posso ajudá-lo com informações sobre:\n\n• Bloco+ e seus componentes\n• STEAMAKER\n• Bloco+Bot (ESP32)\n• CorelLASER\n• Asthor Barden\n\nTambém posso conversar sobre outros assuntos{userName}! Use o microfone para falar comigo ou digite suas perguntas.",
+    "speech": "Posso ajudar você com informações sobre: Bloco mais e seus componentes, Steam Maker, Bloco mais Bot com E S P trinta e dois, Corel Laser, e Asthor Barden. Também posso conversar sobre outros assuntos{userName}! Use o microfone para falar comigo ou digite suas perguntas."
+  },
+  "thanks": {
+    "keywords": ["obrigado", "obrigada", "valeu", "muito obrigado", "agradeco"],
+    "response": "Por nada{userName}! Fico feliz em ajudar. Se tiver mais alguma dúvida, estarei aqui.",
+    "speech": "Por nada{userName}! Fico feliz em ajudar. Se tiver mais alguma dúvida, estarei aqui."
+  },
+  "default": {
+    "response": "Não tenho informações específicas sobre isso{userName}. Posso ajudá-lo com questões sobre Bloco+, STEAMAKER, CorelLASER ou outros produtos da Asthor Barden. Que tal reformular sua pergunta ou me contar mais sobre o que gostaria de saber?",
+    "speech": "Não tenho informações específicas sobre isso{userName}. Posso ajudar você com questões sobre Bloco mais, Steam Maker, Corel Laser ou outros produtos da Asthor Barden. Que tal reformular sua pergunta ou me contar mais sobre o que gostaria de saber?"
+  }
+}
